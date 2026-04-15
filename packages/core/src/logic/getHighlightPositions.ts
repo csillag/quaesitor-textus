@@ -1,4 +1,4 @@
-import type { HighlightSpan, SearchOptions } from './types'
+import type { SearchOptions, HighlightSpan } from './types'
 import { normalizeText } from './normalizeText'
 
 export function getHighlightPositions(
@@ -9,13 +9,16 @@ export function getHighlightPositions(
   if (patterns.length === 0) return []
 
   const normalizedText = normalizeText(text, options)
-
   const spans: HighlightSpan[] = []
+
   for (const pattern of patterns) {
     const normalizedPattern = normalizeText(pattern, options)
-    const start = normalizedText.indexOf(normalizedPattern)
-    if (start !== -1) {
+    let searchFrom = 0
+    while (true) {
+      const start = normalizedText.indexOf(normalizedPattern, searchFrom)
+      if (start === -1) break
       spans.push({ start, end: start + pattern.length })
+      searchFrom = start + 1
     }
   }
 

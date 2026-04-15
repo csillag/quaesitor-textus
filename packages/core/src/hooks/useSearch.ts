@@ -10,6 +10,15 @@ export interface UseSearchResult<T> {
   filteredItems: T[]
 }
 
+/**
+ * A self-contained hook for text search and filtering.
+ *
+ * @param items - The items to filter.
+ * @param getCorpus - Function that extracts the searchable text from an item.
+ *   Pass a stable reference (e.g. wrap with `useCallback`) to avoid
+ *   recomputing `filteredItems` on every render.
+ * @param options - Optional search configuration.
+ */
 export function useSearch<T>(
   items: T[],
   getCorpus: (item: T) => string,

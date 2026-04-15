@@ -61,4 +61,12 @@ describe('getHighlightPositions', () => {
       { start: 0, end: 5 },
     ])
   })
+
+  it('returns multiple spans when a pattern appears more than once', () => {
+    const result = getHighlightPositions('the cat and the dog', ['the'])
+    expect(result).toEqual([
+      { start: 0, end: 3 },
+      { start: 12, end: 15 },
+    ])
+  })
 })

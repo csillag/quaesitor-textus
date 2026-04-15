@@ -5,7 +5,7 @@ import { parseInput } from '../logic/parseInput'
 import { matchItem } from '../logic/matchItem'
 import type { SearchOptions } from '../logic/types'
 
-interface WithSearchProps {
+export interface WithSearchProps {
   options?: SearchOptions
   children: React.ReactNode
 }
