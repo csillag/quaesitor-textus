@@ -8,7 +8,7 @@
 screenshots without asking the user. Requires `make dev-tools` first (one-time setup).
 
 ```bash
-# Full page screenshot
+# Full page screenshot (use 6006 for core-storybook, 6007 for antd-storybook)
 .venv/bin/python scripts/inspect-element.py http://localhost:6006/ \
   "body" --full-screenshot /tmp/storybook.png
 
