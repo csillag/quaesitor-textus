@@ -1,7 +1,7 @@
-import { useState, useMemo, useCallback } from 'react'
-import { parseInput } from '../logic/parseInput'
+import { useMemo } from 'react'
 import { matchItem } from '../logic/matchItem'
 import type { SearchOptions } from '../logic/types'
+import { useSearchInternalState } from './useSearchInternalState'
 
 export interface UseSearchResult<T> {
   query: string
@@ -26,22 +26,14 @@ export function useSearch<T>(
   getCorpus: (item: T) => string,
   options?: SearchOptions
 ): UseSearchResult<T> {
-  const [query, setQuery] = useState('')
-  const { caseSensitive = false, diacriticSensitive = false, minLength = 2 } = options ?? {}
+  const { caseSensitive = false, diacriticSensitive = false } = options ?? {}
 
-  const patterns = useMemo(
-    () => parseInput(query, { caseSensitive, diacriticSensitive, minLength }),
-    [query, caseSensitive, diacriticSensitive, minLength]
-  )
+  const { query, setQuery, patterns, hasPatterns, reset } = useSearchInternalState({ options })
 
   const filteredItems = useMemo(
     () => items.filter(item => matchItem(getCorpus(item), patterns, { caseSensitive, diacriticSensitive })),
     [items, patterns, getCorpus, caseSensitive, diacriticSensitive]
   )
-
-  const hasPatterns = patterns.length > 0
-
-  const reset = useCallback(() => setQuery(''), [setQuery])
 
   return { query, setQuery, patterns, filteredItems, hasPatterns, reset }
 }
