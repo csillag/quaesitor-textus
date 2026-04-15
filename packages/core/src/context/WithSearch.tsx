@@ -8,11 +8,24 @@ import type { SearchOptions } from '../logic/types'
 export interface WithSearchProps {
   options?: SearchOptions
   children: React.ReactNode
+  query?: string
+  onSetQuery?: (q: string) => void
+  onReset?: () => void
 }
 
-export function WithSearch({ options, children }: WithSearchProps) {
-  const [query, setQuery] = useState('')
+export function WithSearch({
+  options,
+  children,
+  query: controlledQuery,
+  onSetQuery,
+  onReset,
+}: WithSearchProps) {
+  const [internalQuery, setInternalQuery] = useState('')
   const { caseSensitive = false, diacriticSensitive = false, minLength = 2 } = options ?? {}
+
+  const isControlled = controlledQuery !== undefined
+  const query = isControlled ? controlledQuery : internalQuery
+  const setQuery = isControlled ? (onSetQuery ?? (() => {})) : setInternalQuery
 
   const patterns = useMemo(
     () => parseInput(query, { caseSensitive, diacriticSensitive, minLength }),
@@ -31,7 +44,13 @@ export function WithSearch({ options, children }: WithSearchProps) {
 
   const hasPatterns = patterns.length > 0
 
-  const reset = useCallback(() => setQuery(''), [setQuery])
+  const reset = useCallback(() => {
+    if (onReset) {
+      onReset()
+    } else {
+      setQuery('')
+    }
+  }, [onReset, setQuery])
 
   const value: SearchContextValue = useMemo(
     () => ({ query, setQuery, patterns, executeSearch, hasPatterns, reset }),

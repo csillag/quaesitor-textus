@@ -22,6 +22,11 @@ const TestConsumer = ({ items, getCorpus }: { items: Item[]; getCorpus: (i: Item
   )
 }
 
+const ResetConsumer = () => {
+  const { reset } = useSearchContext()
+  return <button data-testid="reset" onClick={reset}>Reset</button>
+}
+
 const items: Item[] = [{ name: 'Apple' }, { name: 'Banana' }, { name: 'Cherry' }]
 const getCorpus = (i: Item) => i.name
 
@@ -70,5 +75,49 @@ describe('WithSearch + useSearchContext', () => {
       render(<TestConsumer items={items} getCorpus={getCorpus} />)
     ).toThrow('useSearchContext must be used within <WithSearch>')
     consoleSpy.mockRestore()
+  })
+
+  it('controlled mode: reflects the provided query value', () => {
+    render(
+      <WithSearch query="hello" onSetQuery={() => {}}>
+        <TestConsumer items={items} getCorpus={getCorpus} />
+      </WithSearch>
+    )
+    expect(screen.getByTestId('input')).toHaveValue('hello')
+  })
+
+  it('controlled mode: calls onSetQuery when input changes', () => {
+    const onSetQuery = vi.fn()
+    render(
+      <WithSearch query="" onSetQuery={onSetQuery}>
+        <TestConsumer items={items} getCorpus={getCorpus} />
+      </WithSearch>
+    )
+    fireEvent.change(screen.getByTestId('input'), { target: { value: 'apple' } })
+    expect(onSetQuery).toHaveBeenCalledWith('apple')
+  })
+
+  it('controlled mode: reset calls onSetQuery with empty string when no onReset given', () => {
+    const onSetQuery = vi.fn()
+    render(
+      <WithSearch query="hello" onSetQuery={onSetQuery}>
+        <ResetConsumer />
+      </WithSearch>
+    )
+    fireEvent.click(screen.getByTestId('reset'))
+    expect(onSetQuery).toHaveBeenCalledWith('')
+  })
+
+  it('controlled mode: reset calls onReset instead of onSetQuery when onReset is given', () => {
+    const onSetQuery = vi.fn()
+    const onReset = vi.fn()
+    render(
+      <WithSearch query="hello" onSetQuery={onSetQuery} onReset={onReset}>
+        <ResetConsumer />
+      </WithSearch>
+    )
+    fireEvent.click(screen.getByTestId('reset'))
+    expect(onReset).toHaveBeenCalled()
+    expect(onSetQuery).not.toHaveBeenCalled()
   })
 })
