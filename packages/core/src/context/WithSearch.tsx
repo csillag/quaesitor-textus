@@ -31,7 +31,7 @@ export function WithSearch({ options, children }: WithSearchProps) {
 
   const value: SearchContextValue = useMemo(
     () => ({ query, setQuery, patterns, executeSearch }),
-    [query, patterns, executeSearch]
+    [query, setQuery, patterns, executeSearch]
   )
 
   return <SearchContext.Provider value={value}>{children}</SearchContext.Provider>
