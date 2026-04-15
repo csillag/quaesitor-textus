@@ -5,6 +5,9 @@ import { phrases } from './data/phrases'
 
 const meta: Meta = {
   title: 'Core/FullListDemo',
+  parameters: {
+    layout: 'fullscreen',
+  },
 }
 
 export default meta
@@ -13,7 +16,7 @@ const FullList = () => {
   const { executeSearch, patterns } = useSearchContext()
   const filtered = executeSearch(phrases, item => item)
   return (
-    <div style={{ fontFamily: 'sans-serif', padding: 16, maxWidth: 480 }}>
+    <div style={{ fontFamily: 'sans-serif', padding: 24, maxWidth: 640 }}>
       <h2 style={{ marginTop: 0 }}>quaesitor-textus demo</h2>
       <SearchInput
         placeholder="Search phrases…"
