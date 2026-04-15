@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react'
-import React from 'react'
+import React, { useState } from 'react'
+import { Table } from 'antd'
+import type { TableColumnsType } from 'antd'
 import { WithSearch, HighlightedText, useSearchContext } from '@quaesitor-textus/core'
 import { SearchInput } from '../src'
 import { phrases } from './data/phrases'
@@ -10,9 +12,27 @@ const meta: Meta = {
 
 export default meta
 
-const FullList = () => {
+type PhraseRow = { key: string; phrase: string }
+
+interface FullListProps {
+  currentPage: number
+  setCurrentPage: (page: number) => void
+}
+
+const FullList = ({ currentPage, setCurrentPage }: FullListProps) => {
   const { executeSearch, patterns, hasPatterns, reset } = useSearchContext()
   const filtered = executeSearch(phrases, item => item)
+
+  const dataSource: PhraseRow[] = filtered.map(phrase => ({ key: phrase, phrase }))
+
+  const cols: TableColumnsType<PhraseRow> = [
+    {
+      title: 'Phrase',
+      dataIndex: 'phrase',
+      render: (phrase: string) => <HighlightedText text={phrase} patterns={patterns} />,
+    },
+  ]
+
   return (
     <div style={{ fontFamily: 'sans-serif', padding: 16, maxWidth: 480 }}>
       <h2 style={{ marginTop: 0 }}>quaesitor-textus demo (antd)</h2>
@@ -22,34 +42,43 @@ const FullList = () => {
           <p style={{ color: '#666', fontSize: 13 }}>
             {filtered.length} of {phrases.length} phrases
           </p>
-          <ul style={{ paddingLeft: 20, margin: 0 }}>
-            {filtered.map(phrase => (
-              <li key={phrase} style={{ marginBottom: 4 }}>
-                <HighlightedText text={phrase} patterns={patterns} />
-              </li>
-            ))}
-          </ul>
-          {filtered.length === 0 && (
-            <p style={{ color: '#999', fontStyle: 'italic' }}>
-              No results —{' '}
-              <span
-                onClick={reset}
-                style={{ textDecoration: 'underline', color: '#1677ff', cursor: 'pointer' }}
-              >
-                try a different term
-              </span>
-            </p>
-          )}
+          <Table<PhraseRow>
+            dataSource={dataSource}
+            columns={cols}
+            pagination={{
+              pageSize: 15,
+              current: currentPage,
+              onChange: setCurrentPage,
+            }}
+            locale={{
+              emptyText: (
+                <span style={{ color: '#999', fontStyle: 'italic' }}>
+                  No results —{' '}
+                  <span
+                    onClick={reset}
+                    style={{ textDecoration: 'underline', color: '#1677ff', cursor: 'pointer' }}
+                  >
+                    try a different term
+                  </span>
+                </span>
+              ),
+            }}
+          />
         </>
       )}
     </div>
   )
 }
 
-export const Default: StoryObj = {
-  render: () => (
-    <WithSearch>
-      <FullList />
+const FullListWrapper = () => {
+  const [currentPage, setCurrentPage] = useState(1)
+  return (
+    <WithSearch onChange={() => setCurrentPage(1)}>
+      <FullList currentPage={currentPage} setCurrentPage={setCurrentPage} />
     </WithSearch>
-  ),
+  )
+}
+
+export const Default: StoryObj = {
+  render: () => <FullListWrapper />,
 }
