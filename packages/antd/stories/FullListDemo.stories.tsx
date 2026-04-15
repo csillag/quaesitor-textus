@@ -73,6 +73,7 @@ const FullList = ({ currentPage, setCurrentPage }: FullListProps) => {
 const FullListWrapper = () => {
   const [currentPage, setCurrentPage] = useState(1)
   return (
+    {/* Reset to page 1 whenever the search query changes (old/new values not needed here) */}
     <WithSearch onChange={() => setCurrentPage(1)}>
       <FullList currentPage={currentPage} setCurrentPage={setCurrentPage} />
     </WithSearch>
