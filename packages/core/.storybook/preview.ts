@@ -1,9 +1,7 @@
 import type { Preview } from '@storybook/react'
-import './preview.css'
 
 const preview: Preview = {
   parameters: {
-    layout: 'fullscreen',
     controls: {
       matchers: {
         color: /(background|color)$/i,
