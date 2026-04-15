@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useCallback } from 'react'
 import { SearchContext } from './SearchContext'
 import type { SearchContextValue } from './SearchContext'
 import { parseInput } from '../logic/parseInput'
@@ -29,9 +29,13 @@ export function WithSearch({ options, children }: WithSearchProps) {
     [patterns, caseSensitive, diacriticSensitive]
   )
 
+  const hasPatterns = patterns.length > 0
+
+  const reset = useCallback(() => setQuery(''), [setQuery])
+
   const value: SearchContextValue = useMemo(
-    () => ({ query, setQuery, patterns, executeSearch }),
-    [query, setQuery, patterns, executeSearch]
+    () => ({ query, setQuery, patterns, executeSearch, hasPatterns, reset }),
+    [query, setQuery, patterns, executeSearch, hasPatterns, reset]
   )
 
   return <SearchContext.Provider value={value}>{children}</SearchContext.Provider>
