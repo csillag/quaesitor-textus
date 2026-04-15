@@ -224,4 +224,3 @@ The deployed Storybook is the library's public website.
 - `@quaesitor-textus/raw` — raw React styled `SearchInput` (no UI framework)
 - `@quaesitor-textus/mongo` — MongoDB query builder from patterns
 - `@quaesitor-textus/pg` — PostgreSQL query builder from patterns
-- Demo app (`packages/quaesitor-textus-demo`) — vite + raw React todo-like app
