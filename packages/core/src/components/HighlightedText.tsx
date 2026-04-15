@@ -11,7 +11,13 @@ const DEFAULT_MARK_STYLE: React.CSSProperties = {
 
 interface HighlightedTextProps {
   text: string
+  /** Explicit patterns to highlight. When omitted, patterns come from the nearest WithSearch context. */
   patterns?: string[]
+  /**
+   * Search options used for position computation.
+   * Only meaningful when `patterns` is also supplied directly.
+   * When using context patterns, the options are already baked into those patterns by WithSearch.
+   */
   options?: SearchOptions
   markStyle?: React.CSSProperties
 }
