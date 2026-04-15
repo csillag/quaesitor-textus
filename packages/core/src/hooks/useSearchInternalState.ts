@@ -7,6 +7,7 @@ export interface UseSearchInternalStateParams {
   query?: string
   onSetQuery?: (q: string) => void
   onReset?: () => void
+  onChange?: (oldValue: string, newValue: string) => void
 }
 
 export interface UseSearchInternalStateResult {
@@ -22,6 +23,7 @@ export function useSearchInternalState({
   query: controlledQuery,
   onSetQuery,
   onReset,
+  onChange,
 }: UseSearchInternalStateParams): UseSearchInternalStateResult {
   const [internalQuery, setInternalQuery] = useState('')
   const { caseSensitive = false, diacriticSensitive = false, minLength = 2 } = options ?? {}
@@ -31,13 +33,14 @@ export function useSearchInternalState({
 
   const setQuery = useCallback(
     (newValue: string) => {
+      onChange?.(query, newValue)
       if (isControlled) {
         onSetQuery?.(newValue)
       } else {
         setInternalQuery(newValue)
       }
     },
-    [isControlled, onSetQuery]
+    [query, isControlled, onSetQuery, onChange]
   )
 
   const patterns = useMemo(
@@ -49,11 +52,12 @@ export function useSearchInternalState({
 
   const reset = useCallback(() => {
     if (onReset) {
+      onChange?.(query, '')
       onReset()
     } else {
       setQuery('')
     }
-  }, [onReset, setQuery])
+  }, [onReset, setQuery, query, onChange])
 
   return { query, setQuery, patterns, hasPatterns, reset }
 }

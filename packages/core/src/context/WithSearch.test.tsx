@@ -120,4 +120,52 @@ describe('WithSearch + useSearchContext', () => {
     expect(onReset).toHaveBeenCalled()
     expect(onSetQuery).not.toHaveBeenCalled()
   })
+
+  it('calls onChange with old and new value when query changes (uncontrolled)', () => {
+    const onChange = vi.fn()
+    render(
+      <WithSearch onChange={onChange}>
+        <TestConsumer items={items} getCorpus={getCorpus} />
+      </WithSearch>
+    )
+    fireEvent.change(screen.getByTestId('input'), { target: { value: 'apple' } })
+    expect(onChange).toHaveBeenCalledWith('', 'apple')
+  })
+
+  it('calls onChange with old value and empty string when reset is called (uncontrolled)', () => {
+    const onChange = vi.fn()
+    render(
+      <WithSearch onChange={onChange}>
+        <TestConsumer items={items} getCorpus={getCorpus} />
+        <ResetConsumer />
+      </WithSearch>
+    )
+    fireEvent.change(screen.getByTestId('input'), { target: { value: 'apple' } })
+    onChange.mockClear()
+    fireEvent.click(screen.getByTestId('reset'))
+    expect(onChange).toHaveBeenCalledWith('apple', '')
+  })
+
+  it('calls onChange with old and new value when query changes (controlled)', () => {
+    const onChange = vi.fn()
+    render(
+      <WithSearch query="" onSetQuery={() => {}} onChange={onChange}>
+        <TestConsumer items={items} getCorpus={getCorpus} />
+      </WithSearch>
+    )
+    fireEvent.change(screen.getByTestId('input'), { target: { value: 'apple' } })
+    expect(onChange).toHaveBeenCalledWith('', 'apple')
+  })
+
+  it('calls onChange with old value and empty string when reset is called with onReset (controlled)', () => {
+    const onChange = vi.fn()
+    const onReset = vi.fn()
+    render(
+      <WithSearch query="hello" onSetQuery={() => {}} onReset={onReset} onChange={onChange}>
+        <ResetConsumer />
+      </WithSearch>
+    )
+    fireEvent.click(screen.getByTestId('reset'))
+    expect(onChange).toHaveBeenCalledWith('hello', '')
+  })
 })

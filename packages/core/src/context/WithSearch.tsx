@@ -11,6 +11,7 @@ export interface WithSearchProps {
   query?: string
   onSetQuery?: (q: string) => void
   onReset?: () => void
+  onChange?: (oldValue: string, newValue: string) => void
 }
 
 export function WithSearch({
@@ -19,6 +20,7 @@ export function WithSearch({
   query: controlledQuery,
   onSetQuery,
   onReset,
+  onChange,
 }: WithSearchProps) {
   const { caseSensitive = false, diacriticSensitive = false } = options ?? {}
 
@@ -27,6 +29,7 @@ export function WithSearch({
     query: controlledQuery,
     onSetQuery,
     onReset,
+    onChange,
   })
 
   const executeSearch = useMemo(
