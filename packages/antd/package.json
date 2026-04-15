@@ -2,6 +2,7 @@
   "name": "@quaesitor-textus/antd",
   "version": "0.1.0",
   "type": "module",
+  "license": "Apache-2.0",
   "files": ["dist", "src"],
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
