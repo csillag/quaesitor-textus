@@ -40,13 +40,13 @@ const FullList = ({ currentPage, setCurrentPage }: FullListProps) => {
       {hasPatterns && (
         <>
           <p style={{ color: '#666', fontSize: 13 }}>
-            {filtered.length} of {phrases.length} phrases
+            matches: {filtered.length} of {phrases.length} sentences
           </p>
           <Table<PhraseRow>
             dataSource={dataSource}
             columns={cols}
             pagination={{
-              pageSize: 15,
+              pageSize: 8,
               current: currentPage,
               onChange: setCurrentPage,
             }}

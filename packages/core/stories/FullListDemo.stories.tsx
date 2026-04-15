@@ -23,7 +23,7 @@ const FullList = () => {
       {hasPatterns && (
         <>
           <p style={{ color: '#666', fontSize: 13 }}>
-            {filtered.length} of {phrases.length} phrases
+            matches: {filtered.length} of {phrases.length} sentences
           </p>
           <ul style={{ paddingLeft: 20, margin: 0 }}>
             {filtered.map(phrase => (
