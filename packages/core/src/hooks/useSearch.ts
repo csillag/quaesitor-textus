@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { parseInput } from '../logic/parseInput'
 import { matchItem } from '../logic/matchItem'
 import type { SearchOptions } from '../logic/types'
@@ -8,6 +8,8 @@ export interface UseSearchResult<T> {
   setQuery: (q: string) => void
   patterns: string[]
   filteredItems: T[]
+  hasPatterns: boolean
+  reset: () => void
 }
 
 /**
@@ -37,5 +39,9 @@ export function useSearch<T>(
     [items, patterns, getCorpus, caseSensitive, diacriticSensitive]
   )
 
-  return { query, setQuery, patterns, filteredItems }
+  const hasPatterns = patterns.length > 0
+
+  const reset = useCallback(() => setQuery(''), [setQuery])
+
+  return { query, setQuery, patterns, filteredItems, hasPatterns, reset }
 }

@@ -51,4 +51,35 @@ describe('useSearch', () => {
     act(() => result.current.setQuery('APPLE'))
     expect(result.current.filteredItems).toEqual([{ id: 1, name: 'Apple' }])
   })
+
+  it('hasPatterns is false when query is empty', () => {
+    const { result } = renderHook(() => useSearch(items, getCorpus))
+    expect(result.current.hasPatterns).toBe(false)
+  })
+
+  it('hasPatterns is false when query is below minLength', () => {
+    const { result } = renderHook(() => useSearch(items, getCorpus))
+    act(() => result.current.setQuery('a'))
+    expect(result.current.hasPatterns).toBe(false)
+  })
+
+  it('hasPatterns is true when query has valid patterns', () => {
+    const { result } = renderHook(() => useSearch(items, getCorpus))
+    act(() => result.current.setQuery('ap'))
+    expect(result.current.hasPatterns).toBe(true)
+  })
+
+  it('reset clears the query', () => {
+    const { result } = renderHook(() => useSearch(items, getCorpus))
+    act(() => result.current.setQuery('apple'))
+    act(() => result.current.reset())
+    expect(result.current.query).toBe('')
+  })
+
+  it('reset sets hasPatterns to false', () => {
+    const { result } = renderHook(() => useSearch(items, getCorpus))
+    act(() => result.current.setQuery('apple'))
+    act(() => result.current.reset())
+    expect(result.current.hasPatterns).toBe(false)
+  })
 })
