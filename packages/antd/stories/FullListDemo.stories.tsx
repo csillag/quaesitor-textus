@@ -11,7 +11,7 @@ const meta: Meta = {
 export default meta
 
 const FullList = () => {
-  const { executeSearch, patterns, hasPatterns } = useSearchContext()
+  const { executeSearch, patterns, hasPatterns, reset } = useSearchContext()
   const filtered = executeSearch(phrases, item => item)
   return (
     <div style={{ fontFamily: 'sans-serif', padding: 16, maxWidth: 480 }}>
@@ -30,7 +30,15 @@ const FullList = () => {
             ))}
           </ul>
           {filtered.length === 0 && (
-            <p style={{ color: '#999', fontStyle: 'italic' }}>No results — try a different term</p>
+            <p style={{ color: '#999', fontStyle: 'italic' }}>
+              No results —{' '}
+              <span
+                onClick={reset}
+                style={{ textDecoration: 'underline', color: '#1677ff', cursor: 'pointer' }}
+              >
+                try a different term
+              </span>
+            </p>
           )}
         </>
       )}
