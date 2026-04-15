@@ -18,6 +18,12 @@ importers:
         specifier: workspace:*
         version: link:../core
     devDependencies:
+      '@storybook/addon-docs':
+        specifier: ^10.3.5
+        version: 10.3.5(@types/react@18.3.28)(esbuild@0.27.7)(rollup@4.60.1)(storybook@10.3.5(@testing-library/dom@10.4.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(vite@5.4.21)
+      '@storybook/react-vite':
+        specifier: ^10.3.5
+        version: 10.3.5(esbuild@0.27.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@4.60.1)(storybook@10.3.5(@testing-library/dom@10.4.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)(vite@5.4.21)
       '@testing-library/jest-dom':
         specifier: ^6.4.0
         version: 6.9.1
@@ -39,6 +45,9 @@ importers:
       react-dom:
         specifier: ^18.3.0
         version: 18.3.1(react@18.3.1)
+      storybook:
+        specifier: ^10.3.5
+        version: 10.3.5(@testing-library/dom@10.4.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       tsup:
         specifier: ^8.0.0
         version: 8.5.1(postcss@8.5.10)(typescript@5.9.3)
