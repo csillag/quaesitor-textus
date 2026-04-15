@@ -1,9 +1,9 @@
-import React, { useState, useMemo, useCallback } from 'react'
+import React, { useMemo } from 'react'
 import { SearchContext } from './SearchContext'
 import type { SearchContextValue } from './SearchContext'
-import { parseInput } from '../logic/parseInput'
 import { matchItem } from '../logic/matchItem'
 import type { SearchOptions } from '../logic/types'
+import { useSearchInternalState } from '../hooks/useSearchInternalState'
 
 export interface WithSearchProps {
   options?: SearchOptions
@@ -20,17 +20,14 @@ export function WithSearch({
   onSetQuery,
   onReset,
 }: WithSearchProps) {
-  const [internalQuery, setInternalQuery] = useState('')
-  const { caseSensitive = false, diacriticSensitive = false, minLength = 2 } = options ?? {}
+  const { caseSensitive = false, diacriticSensitive = false } = options ?? {}
 
-  const isControlled = controlledQuery !== undefined
-  const query = isControlled ? controlledQuery : internalQuery
-  const setQuery = isControlled ? (onSetQuery ?? (() => {})) : setInternalQuery
-
-  const patterns = useMemo(
-    () => parseInput(query, { caseSensitive, diacriticSensitive, minLength }),
-    [query, caseSensitive, diacriticSensitive, minLength]
-  )
+  const { query, setQuery, patterns, hasPatterns, reset } = useSearchInternalState({
+    options,
+    query: controlledQuery,
+    onSetQuery,
+    onReset,
+  })
 
   const executeSearch = useMemo(
     (): SearchContextValue['executeSearch'] =>
@@ -41,16 +38,6 @@ export function WithSearch({
       },
     [patterns, caseSensitive, diacriticSensitive]
   )
-
-  const hasPatterns = patterns.length > 0
-
-  const reset = useCallback(() => {
-    if (onReset) {
-      onReset()
-    } else {
-      setQuery('')
-    }
-  }, [onReset, setQuery])
 
   const value: SearchContextValue = useMemo(
     () => ({ query, setQuery, patterns, executeSearch, hasPatterns, reset }),
