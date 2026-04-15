@@ -16,7 +16,7 @@ const FullList = () => {
   const { executeSearch, patterns } = useSearchContext()
   const filtered = executeSearch(phrases, item => item)
   return (
-    <div style={{ fontFamily: 'sans-serif', padding: 24, maxWidth: 640 }}>
+    <div style={{ fontFamily: 'sans-serif', padding: 24, maxWidth: 640, minHeight: '100vh', boxSizing: 'border-box' }}>
       <h2 style={{ marginTop: 0 }}>quaesitor-textus demo</h2>
       <SearchInput
         placeholder="Search phrases…"
