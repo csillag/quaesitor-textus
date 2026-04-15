@@ -1,0 +1,5 @@
+export type { SearchOptions, HighlightSpan } from './types'
+export { parseInput } from './parseInput'
+export { normalizeText } from './normalizeText'
+export { matchItem } from './matchItem'
+export { getHighlightPositions } from './getHighlightPositions'
