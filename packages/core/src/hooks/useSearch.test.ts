@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { useSearch } from './useSearch'
 
@@ -81,5 +81,28 @@ describe('useSearch', () => {
     act(() => result.current.setQuery('apple'))
     act(() => result.current.reset())
     expect(result.current.hasPatterns).toBe(false)
+  })
+
+  it('calls onChange with old and new value when setQuery is called', () => {
+    const onChange = vi.fn()
+    const { result } = renderHook(() => useSearch(items, getCorpus, undefined, onChange))
+    act(() => result.current.setQuery('apple'))
+    expect(onChange).toHaveBeenCalledWith('', 'apple')
+  })
+
+  it('calls onChange with old value and empty string when reset is called', () => {
+    const onChange = vi.fn()
+    const { result } = renderHook(() => useSearch(items, getCorpus, undefined, onChange))
+    act(() => result.current.setQuery('apple'))
+    onChange.mockClear()
+    act(() => result.current.reset())
+    expect(onChange).toHaveBeenCalledWith('apple', '')
+  })
+
+  it('onChange is optional — existing behavior unchanged when not provided', () => {
+    const { result } = renderHook(() => useSearch(items, getCorpus))
+    act(() => result.current.setQuery('apple'))
+    act(() => result.current.reset())
+    expect(result.current.query).toBe('')
   })
 })

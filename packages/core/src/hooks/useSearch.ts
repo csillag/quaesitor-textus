@@ -20,15 +20,20 @@ export interface UseSearchResult<T> {
  *   Pass a stable reference (e.g. wrap with `useCallback`) to avoid
  *   recomputing `filteredItems` on every render.
  * @param options - Optional search configuration.
+ * @param onChange - Optional callback fired on every query change with (oldValue, newValue).
  */
 export function useSearch<T>(
   items: T[],
   getCorpus: (item: T) => string,
-  options?: SearchOptions
+  options?: SearchOptions,
+  onChange?: (oldValue: string, newValue: string) => void
 ): UseSearchResult<T> {
   const { caseSensitive = false, diacriticSensitive = false } = options ?? {}
 
-  const { query, setQuery, patterns, hasPatterns, reset } = useSearchInternalState({ options })
+  const { query, setQuery, patterns, hasPatterns, reset } = useSearchInternalState({
+    options,
+    onChange,
+  })
 
   const filteredItems = useMemo(
     () => items.filter(item => matchItem(getCorpus(item), patterns, { caseSensitive, diacriticSensitive })),
