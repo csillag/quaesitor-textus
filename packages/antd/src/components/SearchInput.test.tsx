@@ -62,7 +62,7 @@ describe('antd SearchInput', () => {
     fireEvent.change(screen.getByPlaceholderText('Search...'), {
       target: { value: 'hello' },
     })
-    expect(screen.getByLabelText('Clear search')).toBeDefined()
+    expect(screen.getByLabelText('Clear search')).toBeTruthy()
   })
 
   it('clicking clear button resets query to empty', () => {
@@ -84,9 +84,11 @@ describe('antd SearchInput', () => {
     render(
       <WithSearch query="hello" onSetQuery={() => {}} onReset={onReset}>
         <SearchInput placeholder="Search..." />
+        <QueryDisplay />
       </WithSearch>
     )
     fireEvent.click(screen.getByLabelText('Clear search'))
     expect(onReset).toHaveBeenCalledTimes(1)
+    expect(screen.getByTestId('query')).toHaveTextContent('hello')
   })
 })
