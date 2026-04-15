@@ -57,4 +57,35 @@ describe('SearchInput', () => {
     )
     expect(screen.getByTestId('my-input')).toBeDefined()
   })
+
+  it('does not show a clear button when query is empty', () => {
+    render(
+      <WithSearch>
+        <SearchInput />
+      </WithSearch>
+    )
+    expect(screen.queryByRole('button', { name: /clear/i })).toBeNull()
+  })
+
+  it('shows a clear button when query is non-empty', () => {
+    render(
+      <WithSearch>
+        <SearchInput />
+      </WithSearch>
+    )
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'hello' } })
+    expect(screen.getByRole('button', { name: /clear/i })).toBeDefined()
+  })
+
+  it('clears the query when the clear button is clicked', () => {
+    render(
+      <WithSearch>
+        <SearchInput />
+        <QueryDisplay />
+      </WithSearch>
+    )
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'hello' } })
+    fireEvent.click(screen.getByRole('button', { name: /clear/i }))
+    expect(screen.getByTestId('query')).toHaveTextContent('')
+  })
 })

@@ -45,4 +45,9 @@ describe('parseInput', () => {
     expect(parseInput('fo', { minLength: 3 })).toEqual([])
     expect(parseInput('foo', { minLength: 3 })).toEqual(['foo'])
   })
+
+  it('deduplicates repeated patterns', () => {
+    expect(parseInput('foo foo')).toEqual(['foo'])
+    expect(parseInput('foo bar foo')).toEqual(['foo', 'bar'])
+  })
 })
