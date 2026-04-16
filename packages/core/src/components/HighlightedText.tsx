@@ -10,14 +10,9 @@ const DEFAULT_MARK_STYLE: React.CSSProperties = {
 }
 
 interface HighlightedTextProps {
-  text: string
-  /** Explicit patterns to highlight. When omitted, patterns come from the nearest WithSearch context. */
+  text: string | undefined
+  /** Additional patterns to highlight on top of any context highlightedPatterns. */
   patterns?: string[]
-  /**
-   * Search options used for position computation.
-   * Only meaningful when `patterns` is also supplied directly.
-   * When using context patterns, the options are already baked into those patterns by WithSearch.
-   */
   options?: SearchOptions
   markStyle?: React.CSSProperties
 }
@@ -29,12 +24,14 @@ export function HighlightedText({
   markStyle = DEFAULT_MARK_STYLE,
 }: HighlightedTextProps) {
   const ctx = useContext(SearchContext)
-  const patterns = propPatterns ?? ctx?.patterns ?? []
+  const patterns = [...new Set([...(ctx?.highlightedPatterns ?? []), ...(propPatterns ?? [])])]
+
+  if (text === undefined) return undefined
 
   const spans = getHighlightPositions(text, patterns, options)
 
   if (spans.length === 0) {
-    return <span>{text}</span>
+    return text
   }
 
   const nodes: React.ReactNode[] = []

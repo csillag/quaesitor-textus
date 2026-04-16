@@ -6,10 +6,11 @@ import { WithSearch } from '../context/WithSearch'
 import { useSearchContext } from '../context/useSearchContext'
 
 describe('HighlightedText', () => {
-  it('renders plain text when patterns prop is empty', () => {
+  it('renders plain text without marks or wrapper when patterns are empty', () => {
     const { container } = render(<HighlightedText text="hello world" patterns={[]} />)
     expect(container.querySelector('mark')).toBeNull()
-    expect(screen.getByText('hello world')).toBeDefined()
+    expect(container.querySelector('span')).toBeNull()
+    expect(container.textContent).toBe('hello world')
   })
 
   it('wraps matched text in a mark element', () => {
@@ -62,7 +63,7 @@ describe('HighlightedText', () => {
     expect(mark?.textContent).toBe('hello')
   })
 
-  it('patterns prop overrides context patterns', () => {
+  it('explicit patterns prop highlights when context has no patterns', () => {
     const { container } = render(
       <WithSearch>
         <HighlightedText text="hello world" patterns={['world']} />
@@ -82,5 +83,36 @@ describe('HighlightedText', () => {
     )
     const mark = container.querySelector('mark') as HTMLElement
     expect(mark.style.background).toBe('red')
+  })
+
+  it('returns nothing when text is undefined', () => {
+    const { container } = render(<HighlightedText text={undefined} />)
+    expect(container.firstChild).toBeNull()
+  })
+
+  it('returns raw string without span wrapper when no patterns match', () => {
+    const { container } = render(<HighlightedText text="hello" patterns={['xyz']} />)
+    expect(container.querySelector('span')).toBeNull()
+    expect(container.querySelector('mark')).toBeNull()
+    expect(container.textContent).toBe('hello')
+  })
+
+  it('merges prop patterns with context highlightedPatterns', async () => {
+    const Setter = () => {
+      const { setQuery } = useSearchContext()
+      React.useEffect(() => { setQuery('hello') }, [setQuery])
+      return null
+    }
+    const { container } = render(
+      <WithSearch>
+        <Setter />
+        <HighlightedText text="hello world" patterns={['world']} />
+      </WithSearch>
+    )
+    await act(async () => {})
+    const marks = container.querySelectorAll('mark')
+    expect(marks).toHaveLength(2)
+    expect(marks[0].textContent).toBe('hello')
+    expect(marks[1].textContent).toBe('world')
   })
 })
