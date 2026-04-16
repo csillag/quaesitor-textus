@@ -10,8 +10,8 @@ const meta: Meta = {
 export default meta
 
 const FullList = () => {
-  const { executeSearch, hasPatterns, reset } = useSearchContext()
-  const filtered = executeSearch(phrases, item => item)
+  const { filterFunction, hasPatterns, reset } = useSearchContext<string>()
+  const filtered = phrases.filter(filterFunction)
   return (
     <div style={{ fontFamily: 'sans-serif', padding: 16, maxWidth: 480 }}>
       <h2 style={{ marginTop: 0 }}>quaesitor-textus demo</h2>

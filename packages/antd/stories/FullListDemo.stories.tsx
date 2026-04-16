@@ -20,8 +20,8 @@ interface FullListProps {
 }
 
 const FullList = ({ currentPage, setCurrentPage }: FullListProps) => {
-  const { executeSearch, hasPatterns, reset } = useSearchContext()
-  const filtered = executeSearch(phrases, item => item)
+  const { filterFunction, hasPatterns, reset } = useSearchContext<string>()
+  const filtered = phrases.filter(filterFunction)
 
   const dataSource: PhraseRow[] = filtered.map(phrase => ({ key: phrase, phrase }))
 
