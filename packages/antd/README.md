@@ -10,36 +10,29 @@ npm install @quaesitor-textus/antd
 
 Requires `antd ≥ 5` and `react ≥ 18`.
 
-## Usage
-
-### Define a consumer component
+## Basic usage
 
 ```tsx
-import { WithSearch, useSearchContext, HighlightedText } from '@quaesitor-textus/core'
+import { WithSearch, useSearchContext, useFilterFunction, HighlightedText } from '@quaesitor-textus/core'
 import { SearchInput } from '@quaesitor-textus/antd'
 
 const items = ['Apple', 'Banana', 'Cherry', 'Date', 'Elderberry']
 
-// FilteredList runs the search and renders results.
-// Keeping it separate makes the App tree easy to read.
 const FilteredList = () => {
-  const { filterFunction } = useSearchContext()
+  const { hasPatterns } = useSearchContext()
+  const filterFunction = useFilterFunction<string>()
   const results = items.filter(filterFunction)
   return (
     <ul>
       {results.map(item => (
         <li key={item}>
-          <HighlightedText text={item} />
+          <HighlightedText text={item} all />
         </li>
       ))}
     </ul>
   )
 }
-```
 
-### Wire it into the tree
-
-```tsx
 export const App = () => (
   <WithSearch>
     <SearchInput placeholder="Search…" />
@@ -48,5 +41,52 @@ export const App = () => (
 )
 ```
 
-`SearchInput` is an antd `Input` with a built-in clear button. The search state and
-filtering logic are provided by `@quaesitor-textus/core`.
+`SearchInput` is an antd `Input` with a built-in clear button. Search state and filtering logic come from `@quaesitor-textus/core`.
+
+## Multi-field search
+
+```tsx
+import { WithSearch, useFilterFunction, HighlightedText } from '@quaesitor-textus/core'
+import { SearchInput } from '@quaesitor-textus/antd'
+
+interface Book { author: string; title: string }
+
+const books: Book[] = [
+  { author: 'Jane Austen', title: 'Pride and Prejudice' },
+  { author: 'Leo Tolstoy', title: 'Anna Karenina' },
+]
+
+const BookList = () => {
+  const filterFunction = useFilterFunction<Book>()
+  return (
+    <ul>
+      {books.filter(filterFunction).map((book, i) => (
+        <li key={i}>
+          <HighlightedText text={book.author} searchNames="author" />
+          {' — '}
+          <HighlightedText text={book.title} searchNames="title" />
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+export const App = () => (
+  <WithSearch name="author" mapping={(b: Book) => b.author}>
+    <WithSearch name="title" mapping={(b: Book) => b.title}>
+      <SearchInput name="author" placeholder="Search author…" />
+      <SearchInput name="title" placeholder="Search title…" />
+      <BookList />
+    </WithSearch>
+  </WithSearch>
+)
+```
+
+## `<SearchInput>` props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `name` | `string` | `"default search"` | Name of the `WithSearch` entry this input controls. |
+| …rest | `InputProps` | — | All other antd `Input` props except `value`, `onChange`, and `suffix`. |
+
+For `WithSearch`, `useFilterFunction`, `useSearchContext`, `HighlightedText`, and `HighlightedTrimmedText` see the [@quaesitor-textus/core docs](https://github.com/csillag/quaesitor-textus/tree/main/packages/core).
