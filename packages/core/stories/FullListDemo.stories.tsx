@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import React from 'react'
-import { WithSearch, SearchInput, HighlightedText, useSearchContext } from '../src'
+import { WithSearch, SearchInput, HighlightedTrimmedText, useSearchContext } from '../src'
 import { phrases } from './data/phrases'
 
 const meta: Meta = {
@@ -10,7 +10,7 @@ const meta: Meta = {
 export default meta
 
 const FullList = () => {
-  const { executeSearch, patterns, hasPatterns, reset } = useSearchContext()
+  const { executeSearch, hasPatterns, reset } = useSearchContext()
   const filtered = executeSearch(phrases, item => item)
   return (
     <div style={{ fontFamily: 'sans-serif', padding: 16, maxWidth: 480 }}>
@@ -28,7 +28,7 @@ const FullList = () => {
           <ul style={{ paddingLeft: 20, margin: 0 }}>
             {filtered.map(phrase => (
               <li key={phrase} style={{ marginBottom: 4 }}>
-                <HighlightedText text={phrase} patterns={patterns} />
+                <HighlightedTrimmedText text={phrase} fragmentLength={40} />
               </li>
             ))}
           </ul>

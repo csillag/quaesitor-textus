@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react'
 import React, { useState } from 'react'
 import { Table } from 'antd'
 import type { TableColumnsType } from 'antd'
-import { WithSearch, HighlightedText, useSearchContext } from '@quaesitor-textus/core'
+import { WithSearch, HighlightedTrimmedText, useSearchContext } from '@quaesitor-textus/core'
 import { SearchInput } from '../src'
 import { phrases } from './data/phrases'
 
@@ -20,7 +20,7 @@ interface FullListProps {
 }
 
 const FullList = ({ currentPage, setCurrentPage }: FullListProps) => {
-  const { executeSearch, patterns, hasPatterns, reset } = useSearchContext()
+  const { executeSearch, hasPatterns, reset } = useSearchContext()
   const filtered = executeSearch(phrases, item => item)
 
   const dataSource: PhraseRow[] = filtered.map(phrase => ({ key: phrase, phrase }))
@@ -29,7 +29,7 @@ const FullList = ({ currentPage, setCurrentPage }: FullListProps) => {
     {
       title: 'Phrase',
       dataIndex: 'phrase',
-      render: (phrase: string) => <HighlightedText text={phrase} patterns={patterns} />,
+      render: (phrase: string) => <HighlightedTrimmedText text={phrase} fragmentLength={40} />,
     },
   ]
 
