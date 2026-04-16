@@ -7,8 +7,7 @@ import { useSearchContext } from './useSearchContext'
 interface Item { name: string }
 
 const TestConsumer = ({ items, getCorpus }: { items: Item[]; getCorpus: (i: Item) => string }) => {
-  const { query, setQuery, patterns, executeSearch } = useSearchContext()
-  const filtered = executeSearch(items, getCorpus)
+  const { query, setQuery, patterns, filterFunction } = useSearchContext<Item>({ mapping: getCorpus })
   return (
     <div>
       <input
@@ -16,7 +15,7 @@ const TestConsumer = ({ items, getCorpus }: { items: Item[]; getCorpus: (i: Item
         onChange={e => setQuery(e.target.value)}
         data-testid="input"
       />
-      <div data-testid="count">{filtered.length}</div>
+      <div data-testid="count">{items.filter(filterFunction).length}</div>
       <div data-testid="patterns">{patterns.join(',')}</div>
     </div>
   )
@@ -25,6 +24,16 @@ const TestConsumer = ({ items, getCorpus }: { items: Item[]; getCorpus: (i: Item
 const ResetConsumer = () => {
   const { reset } = useSearchContext()
   return <button data-testid="reset" onClick={reset}>Reset</button>
+}
+
+const FilterConsumer = ({ items, getCorpus }: { items: Item[]; getCorpus: (i: Item) => string }) => {
+  const { filterFunction } = useSearchContext<Item>({ mapping: getCorpus })
+  return <div data-testid="filter-count">{items.filter(filterFunction).length}</div>
+}
+
+const StringFilterConsumer = ({ items }: { items: string[] }) => {
+  const { filterFunction } = useSearchContext<string>()
+  return <div data-testid="string-count">{items.filter(filterFunction).length}</div>
 }
 
 const HighlightConsumer = () => {
@@ -45,7 +54,7 @@ describe('WithSearch + useSearchContext', () => {
     expect(screen.getByTestId('input')).toHaveValue('')
   })
 
-  it('executeSearch returns all items when query is empty', () => {
+  it('filterFunction (TestConsumer) returns all items when query is empty', () => {
     render(
       <WithSearch>
         <TestConsumer items={items} getCorpus={getCorpus} />
@@ -54,7 +63,7 @@ describe('WithSearch + useSearchContext', () => {
     expect(screen.getByTestId('count')).toHaveTextContent('3')
   })
 
-  it('executeSearch filters items as query changes', () => {
+  it('filterFunction filters items as query changes', () => {
     render(
       <WithSearch>
         <TestConsumer items={items} getCorpus={getCorpus} />
@@ -200,5 +209,33 @@ describe('WithSearch + useSearchContext', () => {
     const el = screen.getByTestId('inner-highlighted')
     expect(el.textContent).toContain('apple')
     expect(el.textContent).toContain('banana')
+  })
+
+  it('filterFunction returns all items when query is empty', () => {
+    render(
+      <WithSearch>
+        <FilterConsumer items={items} getCorpus={getCorpus} />
+      </WithSearch>
+    )
+    expect(screen.getByTestId('filter-count')).toHaveTextContent('3')
+  })
+
+  it('filterFunction filters items using provided mapping', () => {
+    render(
+      <WithSearch query="an" onSetQuery={() => {}}>
+        <FilterConsumer items={items} getCorpus={getCorpus} />
+      </WithSearch>
+    )
+    expect(screen.getByTestId('filter-count')).toHaveTextContent('1')
+  })
+
+  it('filterFunction works with default string type (no mapping)', () => {
+    const strings = ['Apple', 'Banana', 'Cherry']
+    render(
+      <WithSearch query="an" onSetQuery={() => {}}>
+        <StringFilterConsumer items={strings} />
+      </WithSearch>
+    )
+    expect(screen.getByTestId('string-count')).toHaveTextContent('1')
   })
 })

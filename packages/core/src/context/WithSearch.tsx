@@ -1,7 +1,6 @@
 import React, { useContext, useMemo } from 'react'
 import { SearchContext } from './SearchContext'
 import type { SearchContextValue } from './SearchContext'
-import { matchItem } from '../logic/matchItem'
 import type { SearchOptions } from '../logic/types'
 import { useSearchInternalState } from '../hooks/useSearchInternalState'
 
@@ -22,8 +21,6 @@ export function WithSearch({
   onReset,
   onChange,
 }: WithSearchProps) {
-  const { caseSensitive = false, diacriticSensitive = false } = options ?? {}
-
   const { query, setQuery, patterns, hasPatterns, reset } = useSearchInternalState({
     options,
     query: controlledQuery,
@@ -34,24 +31,14 @@ export function WithSearch({
 
   const upstreamCtx = useContext(SearchContext)
 
-  const executeSearch = useMemo(
-    (): SearchContextValue['executeSearch'] =>
-      function executeSearch<T>(items: T[], getCorpus: (item: T) => string): T[] {
-        return items.filter(item =>
-          matchItem(getCorpus(item), patterns, { caseSensitive, diacriticSensitive })
-        )
-      },
-    [patterns, caseSensitive, diacriticSensitive]
-  )
-
   const highlightedPatterns = useMemo(
     () => [...new Set([...(upstreamCtx?.highlightedPatterns ?? []), ...patterns])],
     [upstreamCtx?.highlightedPatterns, patterns]
   )
 
   const value: SearchContextValue = useMemo(
-    () => ({ query, setQuery, patterns, highlightedPatterns, executeSearch, hasPatterns, reset }),
-    [query, setQuery, patterns, highlightedPatterns, executeSearch, hasPatterns, reset]
+    () => ({ query, setQuery, patterns, highlightedPatterns, hasPatterns, reset }),
+    [query, setQuery, patterns, highlightedPatterns, hasPatterns, reset]
   )
 
   return <SearchContext.Provider value={value}>{children}</SearchContext.Provider>

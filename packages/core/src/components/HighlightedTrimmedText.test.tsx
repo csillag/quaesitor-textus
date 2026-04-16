@@ -10,7 +10,6 @@ function makeCtx(highlightedPatterns: string[]): SearchContextValue {
     setQuery: () => {},
     patterns: highlightedPatterns,
     highlightedPatterns,
-    executeSearch: <T,>(items: T[]) => items,
     hasPatterns: highlightedPatterns.length > 0,
     reset: () => {},
   }
