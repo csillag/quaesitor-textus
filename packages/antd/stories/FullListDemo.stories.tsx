@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react'
-import React, { useState } from 'react'
-import { Table } from 'antd'
+import React, { useState, useEffect } from 'react'
+import { Table, Card } from 'antd'
 import type { TableColumnsType } from 'antd'
 import { WithSearch, HighlightedTrimmedText, useSearchContext } from '@quaesitor-textus/core'
 import { SearchInput } from '../src'
-import { phrases } from './data/phrases'
+import { sentences } from './data/sentences'
 
 const meta: Meta = {
   title: 'Antd/FullListDemo',
@@ -12,7 +12,7 @@ const meta: Meta = {
 
 export default meta
 
-type PhraseRow = { key: string; phrase: string }
+type SentenceRow = { key: string; sentence: string }
 
 interface FullListProps {
   currentPage: number
@@ -21,28 +21,45 @@ interface FullListProps {
 
 const FullList = ({ currentPage, setCurrentPage }: FullListProps) => {
   const { filterFunction, hasPatterns, reset } = useSearchContext<string>()
-  const filtered = phrases.filter(filterFunction)
+  const filtered = sentences.filter(filterFunction)
+  const [selectedSentence, setSelectedSentence] = useState<string | null>(null)
 
-  const dataSource: PhraseRow[] = filtered.map(phrase => ({ key: phrase, phrase }))
+  useEffect(() => {
+    if (selectedSentence !== null) {
+      if (!(filtered.length === 1 && filtered[0] === selectedSentence)) {
+        setSelectedSentence(null)
+      }
+    }
+  }, [filtered, selectedSentence])
 
-  const cols: TableColumnsType<PhraseRow> = [
+  const dataSource: SentenceRow[] = filtered.map(sentence => ({ key: sentence, sentence }))
+
+  const cols: TableColumnsType<SentenceRow> = [
     {
-      title: 'Phrase',
-      dataIndex: 'phrase',
-      render: (phrase: string) => <HighlightedTrimmedText text={phrase} fragmentLength={40} />,
+      title: 'Sentence',
+      dataIndex: 'sentence',
+      render: (sentence: string) => <HighlightedTrimmedText text={sentence} fragmentLength={40} />,
     },
   ]
 
   return (
     <div style={{ fontFamily: 'sans-serif', padding: 16, maxWidth: 480 }}>
       <h2 style={{ marginTop: 0 }}>quaesitor-textus demo (antd)</h2>
-      <SearchInput placeholder="Search phrases…" autoFocus />
+      <SearchInput
+        placeholder="Search sentences…"
+        autoFocus
+        onKeyDown={e => {
+          if (e.key === 'Enter' && filtered.length === 1) {
+            setSelectedSentence(filtered[0])
+          }
+        }}
+      />
       {hasPatterns && (
         <>
           <p style={{ color: '#666', fontSize: 13 }}>
-            matches: {filtered.length} of {phrases.length} sentences
+            matches: {filtered.length} of {sentences.length} sentences
           </p>
-          <Table<PhraseRow>
+          <Table<SentenceRow>
             dataSource={dataSource}
             columns={cols}
             pagination={{
@@ -64,6 +81,11 @@ const FullList = ({ currentPage, setCurrentPage }: FullListProps) => {
               ),
             }}
           />
+          {selectedSentence !== null && (
+            <Card style={{ marginTop: 16, borderRadius: 12 }}>
+              {selectedSentence}
+            </Card>
+          )}
         </>
       )}
     </div>
@@ -74,7 +96,6 @@ const FullListWrapper = () => {
   const [currentPage, setCurrentPage] = useState(1)
   return (
     <WithSearch
-      // Reset to page 1 whenever the search query changes (old/new values not needed here)
       onChange={() => setCurrentPage(1)}
     >
       <FullList currentPage={currentPage} setCurrentPage={setCurrentPage} />
