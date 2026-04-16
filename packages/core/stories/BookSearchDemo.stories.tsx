@@ -64,19 +64,33 @@ const BookSearchWrapper = () => {
               placeholder="Search for author"
               style={{ flex: 1, padding: '6px 10px', fontSize: 14, boxSizing: 'border-box' }}
             />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2, fontSize: 13 }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <input
+                  type="radio"
+                  name="mode"
+                  value="AND"
+                  checked={mode === 'AND'}
+                  onChange={() => setMode('AND')}
+                />
+                AND
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <input
+                  type="radio"
+                  name="mode"
+                  value="OR"
+                  checked={mode === 'OR'}
+                  onChange={() => setMode('OR')}
+                />
+                OR
+              </label>
+            </div>
             <SearchInput
               name="title"
               placeholder="Search for title"
               style={{ flex: 1, padding: '6px 10px', fontSize: 14, boxSizing: 'border-box' }}
             />
-            <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, whiteSpace: 'nowrap' }}>
-              <input
-                type="checkbox"
-                checked={mode === 'OR'}
-                onChange={e => setMode(e.target.checked ? 'OR' : 'AND')}
-              />
-              OR mode
-            </label>
           </div>
           <BookList mode={mode} />
         </div>

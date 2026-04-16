@@ -94,11 +94,6 @@ const BookSearchWrapper = () => {
               placeholder="Search for author"
               style={{ width: 220 }}
             />
-            <SearchInput
-              name="title"
-              placeholder="Search for title"
-              style={{ width: 220 }}
-            />
             <Space>
               <span style={{ fontSize: 13 }}>AND</span>
               <Switch
@@ -108,6 +103,11 @@ const BookSearchWrapper = () => {
               />
               <span style={{ fontSize: 13 }}>OR</span>
             </Space>
+            <SearchInput
+              name="title"
+              placeholder="Search for title"
+              style={{ width: 220 }}
+            />
           </Space>
           <BookTable mode={mode} currentPage={currentPage} setCurrentPage={setCurrentPage} />
         </div>
