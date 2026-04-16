@@ -1,24 +1,19 @@
-import { useContext, useMemo } from 'react'
-import { SearchContext } from './SearchContext'
-import { matchItem } from '../logic/matchItem'
+import { useContext } from 'react'
+import { SearchContext, DEFAULT_SEARCH_NAME } from './SearchContext'
 
-export interface ItemOptions<T> {
-  mapping?: (item: T) => string
-}
-
-export function useSearchContext<T = string>(itemOptions?: ItemOptions<T>) {
-  const ctx = useContext(SearchContext)
-  if (!ctx) {
-    throw new Error('useSearchContext must be used within <WithSearch>')
+export function useSearchContext(name: string = DEFAULT_SEARCH_NAME) {
+  const map = useContext(SearchContext)
+  const entry = map[name]
+  if (!entry) {
+    throw new Error(
+      `useSearchContext: no WithSearch with name "${name}" found in the tree.`
+    )
   }
-  const { query, setQuery, patterns, highlightedPatterns, hasPatterns, reset } = ctx
-  const filterFunction = useMemo(
-    () => {
-      const mapping: (item: T) => string =
-        itemOptions?.mapping ?? ((x: unknown) => x as string)
-      return (item: T): boolean => matchItem(mapping(item), patterns)
-    },
-    [itemOptions?.mapping, patterns]
-  )
-  return { query, setQuery, patterns, highlightedPatterns, filterFunction, hasPatterns, reset }
+  return {
+    query: entry.query,
+    setQuery: entry.setQuery,
+    patterns: entry.patterns,
+    hasPatterns: entry.hasPatterns,
+    reset: entry.reset,
+  }
 }

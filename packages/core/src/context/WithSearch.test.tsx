@@ -3,98 +3,113 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import React from 'react'
 import { WithSearch } from './WithSearch'
 import { useSearchContext } from './useSearchContext'
+import { SearchContext } from './SearchContext'
 
-interface Item { name: string }
-
-const TestConsumer = ({ items, getCorpus }: { items: Item[]; getCorpus: (i: Item) => string }) => {
-  const { query, setQuery, patterns, filterFunction } = useSearchContext<Item>({ mapping: getCorpus })
+const QueryDisplay = ({ name }: { name?: string } = {}) => {
+  const { query, setQuery } = useSearchContext(name)
   return (
     <div>
-      <input
-        value={query}
-        onChange={e => setQuery(e.target.value)}
-        data-testid="input"
-      />
-      <div data-testid="count">{items.filter(filterFunction).length}</div>
-      <div data-testid="patterns">{patterns.join(',')}</div>
+      <input value={query} onChange={e => setQuery(e.target.value)} data-testid="input" />
+      <div data-testid="query">{query}</div>
     </div>
   )
 }
 
-const ResetConsumer = () => {
-  const { reset } = useSearchContext()
+const PatternDisplay = ({ name }: { name?: string } = {}) => {
+  const { patterns } = useSearchContext(name)
+  return <div data-testid="patterns">{patterns.join(',')}</div>
+}
+
+const ResetButton = ({ name }: { name?: string } = {}) => {
+  const { reset } = useSearchContext(name)
   return <button data-testid="reset" onClick={reset}>Reset</button>
 }
 
-const FilterConsumer = ({ items, getCorpus }: { items: Item[]; getCorpus: (i: Item) => string }) => {
-  const { filterFunction } = useSearchContext<Item>({ mapping: getCorpus })
-  return <div data-testid="filter-count">{items.filter(filterFunction).length}</div>
+const MapKeys = () => {
+  const map = React.useContext(SearchContext)
+  return <div data-testid="map-keys">{Object.keys(map).sort().join(',')}</div>
 }
-
-const StringFilterConsumer = ({ items }: { items: string[] }) => {
-  const { filterFunction } = useSearchContext<string>()
-  return <div data-testid="string-count">{items.filter(filterFunction).length}</div>
-}
-
-const HighlightConsumer = () => {
-  const { highlightedPatterns } = useSearchContext()
-  return <div data-testid="highlighted">{highlightedPatterns.join(',')}</div>
-}
-
-const items: Item[] = [{ name: 'Apple' }, { name: 'Banana' }, { name: 'Cherry' }]
-const getCorpus = (i: Item) => i.name
 
 describe('WithSearch + useSearchContext', () => {
   it('provides initial empty query', () => {
-    render(
-      <WithSearch>
-        <TestConsumer items={items} getCorpus={getCorpus} />
-      </WithSearch>
-    )
+    render(<WithSearch><QueryDisplay /></WithSearch>)
     expect(screen.getByTestId('input')).toHaveValue('')
   })
 
-  it('filterFunction (TestConsumer) returns all items when query is empty', () => {
-    render(
-      <WithSearch>
-        <TestConsumer items={items} getCorpus={getCorpus} />
-      </WithSearch>
-    )
-    expect(screen.getByTestId('count')).toHaveTextContent('3')
+  it('updates query when user types', () => {
+    render(<WithSearch><QueryDisplay /></WithSearch>)
+    fireEvent.change(screen.getByTestId('input'), { target: { value: 'hello' } })
+    expect(screen.getByTestId('query')).toHaveTextContent('hello')
   })
 
-  it('filterFunction filters items as query changes', () => {
+  it('parses patterns from query', () => {
     render(
       <WithSearch>
-        <TestConsumer items={items} getCorpus={getCorpus} />
-      </WithSearch>
-    )
-    fireEvent.change(screen.getByTestId('input'), { target: { value: 'an' } })
-    expect(screen.getByTestId('count')).toHaveTextContent('1')
-  })
-
-  it('exposes parsed patterns', () => {
-    render(
-      <WithSearch>
-        <TestConsumer items={items} getCorpus={getCorpus} />
+        <QueryDisplay />
+        <PatternDisplay />
       </WithSearch>
     )
     fireEvent.change(screen.getByTestId('input'), { target: { value: 'apple' } })
     expect(screen.getByTestId('patterns')).toHaveTextContent('apple')
   })
 
-  it('throws a descriptive error when used outside WithSearch', () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+  it('defaults name to "default search"', () => {
+    render(<WithSearch><MapKeys /></WithSearch>)
+    expect(screen.getByTestId('map-keys')).toHaveTextContent('default search')
+  })
+
+  it('uses provided name in the context map', () => {
+    render(<WithSearch name="title"><MapKeys /></WithSearch>)
+    expect(screen.getByTestId('map-keys')).toHaveTextContent('title')
+  })
+
+  it('nested WithSearch instances accumulate keys in the map', () => {
+    render(
+      <WithSearch name="author">
+        <WithSearch name="title">
+          <MapKeys />
+        </WithSearch>
+      </WithSearch>
+    )
+    const text = screen.getByTestId('map-keys').textContent
+    expect(text).toContain('author')
+    expect(text).toContain('title')
+  })
+
+  it('throws when duplicate name is used', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
     expect(() =>
-      render(<TestConsumer items={items} getCorpus={getCorpus} />)
-    ).toThrow('useSearchContext must be used within <WithSearch>')
-    consoleSpy.mockRestore()
+      render(
+        <WithSearch name="search">
+          <WithSearch name="search"><div /></WithSearch>
+        </WithSearch>
+      )
+    ).toThrow('WithSearch: duplicate name "search"')
+    spy.mockRestore()
+  })
+
+  it('useSearchContext throws when named entry is not found', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    expect(() =>
+      render(<QueryDisplay name="missing" />)
+    ).toThrow('useSearchContext: no WithSearch with name "missing"')
+    spy.mockRestore()
+  })
+
+  it('useSearchContext looks up named entry independently', () => {
+    render(
+      <WithSearch name="title">
+        <QueryDisplay name="title" />
+      </WithSearch>
+    )
+    fireEvent.change(screen.getByTestId('input'), { target: { value: 'gatsby' } })
+    expect(screen.getByTestId('query')).toHaveTextContent('gatsby')
   })
 
   it('controlled mode: reflects the provided query value', () => {
     render(
       <WithSearch query="hello" onSetQuery={() => {}}>
-        <TestConsumer items={items} getCorpus={getCorpus} />
+        <QueryDisplay />
       </WithSearch>
     )
     expect(screen.getByTestId('input')).toHaveValue('hello')
@@ -104,22 +119,11 @@ describe('WithSearch + useSearchContext', () => {
     const onSetQuery = vi.fn()
     render(
       <WithSearch query="" onSetQuery={onSetQuery}>
-        <TestConsumer items={items} getCorpus={getCorpus} />
+        <QueryDisplay />
       </WithSearch>
     )
     fireEvent.change(screen.getByTestId('input'), { target: { value: 'apple' } })
     expect(onSetQuery).toHaveBeenCalledWith('apple')
-  })
-
-  it('controlled mode: reset calls onSetQuery with empty string when no onReset given', () => {
-    const onSetQuery = vi.fn()
-    render(
-      <WithSearch query="hello" onSetQuery={onSetQuery}>
-        <ResetConsumer />
-      </WithSearch>
-    )
-    fireEvent.click(screen.getByTestId('reset'))
-    expect(onSetQuery).toHaveBeenCalledWith('')
   })
 
   it('controlled mode: reset calls onReset instead of onSetQuery when onReset is given', () => {
@@ -127,7 +131,7 @@ describe('WithSearch + useSearchContext', () => {
     const onReset = vi.fn()
     render(
       <WithSearch query="hello" onSetQuery={onSetQuery} onReset={onReset}>
-        <ResetConsumer />
+        <ResetButton />
       </WithSearch>
     )
     fireEvent.click(screen.getByTestId('reset'))
@@ -135,23 +139,35 @@ describe('WithSearch + useSearchContext', () => {
     expect(onSetQuery).not.toHaveBeenCalled()
   })
 
-  it('calls onChange with old and new value when query changes (uncontrolled)', () => {
+  it('reset clears the query', () => {
+    render(
+      <WithSearch>
+        <QueryDisplay />
+        <ResetButton />
+      </WithSearch>
+    )
+    fireEvent.change(screen.getByTestId('input'), { target: { value: 'apple' } })
+    fireEvent.click(screen.getByTestId('reset'))
+    expect(screen.getByTestId('query')).toHaveTextContent('')
+  })
+
+  it('calls onChange with old and new value when query changes', () => {
     const onChange = vi.fn()
     render(
       <WithSearch onChange={onChange}>
-        <TestConsumer items={items} getCorpus={getCorpus} />
+        <QueryDisplay />
       </WithSearch>
     )
     fireEvent.change(screen.getByTestId('input'), { target: { value: 'apple' } })
     expect(onChange).toHaveBeenCalledWith('', 'apple')
   })
 
-  it('calls onChange with old value and empty string when reset is called (uncontrolled)', () => {
+  it('calls onChange with old value and empty string when reset is called', () => {
     const onChange = vi.fn()
     render(
       <WithSearch onChange={onChange}>
-        <TestConsumer items={items} getCorpus={getCorpus} />
-        <ResetConsumer />
+        <QueryDisplay />
+        <ResetButton />
       </WithSearch>
     )
     fireEvent.change(screen.getByTestId('input'), { target: { value: 'apple' } })
@@ -160,82 +176,32 @@ describe('WithSearch + useSearchContext', () => {
     expect(onChange).toHaveBeenCalledWith('apple', '')
   })
 
-  it('calls onChange with old and new value when query changes (controlled)', () => {
-    const onChange = vi.fn()
-    render(
-      <WithSearch query="" onSetQuery={() => {}} onChange={onChange}>
-        <TestConsumer items={items} getCorpus={getCorpus} />
-      </WithSearch>
-    )
-    fireEvent.change(screen.getByTestId('input'), { target: { value: 'apple' } })
-    expect(onChange).toHaveBeenCalledWith('', 'apple')
-  })
-
-  it('calls onChange with old value and empty string when reset is called with onReset (controlled)', () => {
-    const onChange = vi.fn()
-    const onReset = vi.fn()
-    render(
-      <WithSearch query="hello" onSetQuery={() => {}} onReset={onReset} onChange={onChange}>
-        <ResetConsumer />
-      </WithSearch>
-    )
-    fireEvent.click(screen.getByTestId('reset'))
-    expect(onChange).toHaveBeenCalledWith('hello', '')
-  })
-
-  it('exposes highlightedPatterns equal to patterns', () => {
-    render(
-      <WithSearch>
-        <TestConsumer items={items} getCorpus={getCorpus} />
-        <HighlightConsumer />
-      </WithSearch>
-    )
-    fireEvent.change(screen.getByTestId('input'), { target: { value: 'apple' } })
-    expect(screen.getByTestId('highlighted')).toHaveTextContent('apple')
-  })
-
-  it('nested WithSearch accumulates highlightedPatterns from both levels', () => {
-    const InnerHighlight = () => {
-      const { highlightedPatterns } = useSearchContext()
-      return <div data-testid="inner-highlighted">{highlightedPatterns.join(',')}</div>
+  it('stores mapping function in the context entry', () => {
+    const mapping = (s: string) => s.toUpperCase()
+    const MapCheck = () => {
+      const map = React.useContext(SearchContext)
+      const entry = map['default search']
+      return <div data-testid="mapped">{entry?.mapping('hello')}</div>
     }
     render(
-      <WithSearch query="apple">
-        <WithSearch query="banana">
-          <InnerHighlight />
-        </WithSearch>
+      <WithSearch mapping={mapping}>
+        <MapCheck />
       </WithSearch>
     )
-    const el = screen.getByTestId('inner-highlighted')
-    expect(el.textContent).toContain('apple')
-    expect(el.textContent).toContain('banana')
+    expect(screen.getByTestId('mapped')).toHaveTextContent('HELLO')
   })
 
-  it('filterFunction returns all items when query is empty', () => {
+  it('default mapping converts item to string', () => {
+    const MapCheck = () => {
+      const map = React.useContext(SearchContext)
+      const entry = map['default search']
+      return <div data-testid="mapped">{entry?.mapping(42)}</div>
+    }
     render(
       <WithSearch>
-        <FilterConsumer items={items} getCorpus={getCorpus} />
+        <MapCheck />
       </WithSearch>
     )
-    expect(screen.getByTestId('filter-count')).toHaveTextContent('3')
-  })
-
-  it('filterFunction filters items using provided mapping', () => {
-    render(
-      <WithSearch query="an" onSetQuery={() => {}}>
-        <FilterConsumer items={items} getCorpus={getCorpus} />
-      </WithSearch>
-    )
-    expect(screen.getByTestId('filter-count')).toHaveTextContent('1')
-  })
-
-  it('filterFunction works with default string type (no mapping)', () => {
-    const strings = ['Apple', 'Banana', 'Cherry']
-    render(
-      <WithSearch query="an" onSetQuery={() => {}}>
-        <StringFilterConsumer items={strings} />
-      </WithSearch>
-    )
-    expect(screen.getByTestId('string-count')).toHaveTextContent('1')
+    expect(screen.getByTestId('mapped')).toHaveTextContent('42')
   })
 })

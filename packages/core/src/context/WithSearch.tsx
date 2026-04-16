@@ -1,10 +1,12 @@
 import React, { useContext, useMemo } from 'react'
-import { SearchContext } from './SearchContext'
-import type { SearchContextValue } from './SearchContext'
+import { SearchContext, DEFAULT_SEARCH_NAME } from './SearchContext'
+import type { SearchEntry } from './SearchContext'
 import type { SearchOptions } from '../logic/types'
 import { useSearchInternalState } from '../hooks/useSearchInternalState'
 
-export interface WithSearchProps {
+export interface WithSearchProps<T = unknown> {
+  name?: string
+  mapping?: (item: T) => string
   options?: SearchOptions
   children: React.ReactNode
   query?: string
@@ -13,14 +15,16 @@ export interface WithSearchProps {
   onChange?: (oldValue: string, newValue: string) => void
 }
 
-export function WithSearch({
+export function WithSearch<T = unknown>({
+  name = DEFAULT_SEARCH_NAME,
+  mapping = String as (item: unknown) => string,
   options,
   children,
   query: controlledQuery,
   onSetQuery,
   onReset,
   onChange,
-}: WithSearchProps) {
+}: WithSearchProps<T>) {
   const { query, setQuery, patterns, hasPatterns, reset } = useSearchInternalState({
     options,
     query: controlledQuery,
@@ -29,16 +33,30 @@ export function WithSearch({
     onChange,
   })
 
-  const upstreamCtx = useContext(SearchContext)
+  const upstreamMap = useContext(SearchContext)
 
-  const highlightedPatterns = useMemo(
-    () => [...new Set([...(upstreamCtx?.highlightedPatterns ?? []), ...patterns])],
-    [upstreamCtx?.highlightedPatterns, patterns]
+  if (name in upstreamMap) {
+    throw new Error(
+      `WithSearch: duplicate name "${name}". Each WithSearch in the same tree must have a unique name.`
+    )
+  }
+
+  const entry: SearchEntry<unknown> = useMemo(
+    () => ({
+      query,
+      setQuery,
+      patterns,
+      hasPatterns,
+      reset,
+      mapping: mapping as (item: unknown) => string,
+      options,
+    }),
+    [query, setQuery, patterns, hasPatterns, reset, mapping, options]
   )
 
-  const value: SearchContextValue = useMemo(
-    () => ({ query, setQuery, patterns, highlightedPatterns, hasPatterns, reset }),
-    [query, setQuery, patterns, highlightedPatterns, hasPatterns, reset]
+  const value = useMemo(
+    () => ({ ...upstreamMap, [name]: entry }),
+    [upstreamMap, name, entry]
   )
 
   return <SearchContext.Provider value={value}>{children}</SearchContext.Provider>
