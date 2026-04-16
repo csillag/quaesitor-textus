@@ -34,9 +34,12 @@ describe('parseInput', () => {
     expect(parseInput('fo')).toEqual(['fo'])
   })
 
-  it('returns all patterns when multiple patterns are present, regardless of length', () => {
-    // minLength check only applies when there is exactly one pattern
-    expect(parseInput('f b')).toEqual(['f', 'b'])
+  it('returns empty array when no pattern meets minLength, even with multiple patterns', () => {
+    expect(parseInput('f b')).toEqual([])
+  })
+
+  it('returns all patterns when at least one meets minLength', () => {
+    expect(parseInput('foo a')).toEqual(['foo', 'a'])
   })
 
   it('respects custom minLength option', () => {
@@ -44,6 +47,11 @@ describe('parseInput', () => {
     expect(parseInput('f', { minLength: 3 })).toEqual([])
     expect(parseInput('fo', { minLength: 3 })).toEqual([])
     expect(parseInput('foo', { minLength: 3 })).toEqual(['foo'])
+  })
+
+  it('returns all patterns when at least one meets custom minLength', () => {
+    expect(parseInput('foobar a', { minLength: 4 })).toEqual(['foobar', 'a'])
+    expect(parseInput('foo bar', { minLength: 4 })).toEqual([])
   })
 
   it('deduplicates repeated patterns', () => {
