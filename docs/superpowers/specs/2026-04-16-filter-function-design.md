@@ -1,6 +1,6 @@
 # `filterFunction` — Replace `executeSearch` with Array-Compatible Filter
 
-**Base revision:** `7da635de2bbf8073888a729da6764a26b742f2b6` on branch `main` (as of 2026-04-16T01:15:10Z)
+**Base revision:** `7da635de2bbf8073888a729da6764a26b742f2b6` on branch `main`, later updated to reflect `3f32267d73e17f45760dc44d8cf5c415781393d6` (as of 2026-04-16T01:50:34Z)
 
 ## Summary
 
@@ -13,13 +13,14 @@ argument of `useSearchContext`, making `useSearchContext` generic over the item 
 
 ## Section 1 — `SearchContextValue`
 
-**One change only:** remove `executeSearch`. Nothing is added.
+Remove `executeSearch`. The `highlightedPatterns: string[]` field was added by a parallel feature (`highlight-patterns-and-trimming`) and is already present — this spec leaves it untouched.
 
 ```ts
 export interface SearchContextValue {
   query: string
   setQuery: (q: string) => void
   patterns: string[]
+  highlightedPatterns: string[]   // added by parallel feature; left as-is
   hasPatterns: boolean
   reset: () => void
 }
@@ -87,6 +88,21 @@ Default case (string arrays) — no argument needed:
 const { filterFunction } = useSearchContext()
 const results = items.filter(filterFunction)
 ```
+
+### Rebase conflict resolution for story files
+
+Both `packages/core/stories/FullListDemo.stories.tsx` and `packages/antd/stories/FullListDemo.stories.tsx` conflict during rebase because the parallel `highlight-patterns-and-trimming` feature replaced `HighlightedText` with `HighlightedTrimmedText` in those same files while this branch replaced `executeSearch` with `filterFunction` in the same lines.
+
+The resolution combines both changes: use `filterFunction` from this branch AND `HighlightedTrimmedText` from main. Resolved form for both stories:
+
+```tsx
+const { filterFunction, hasPatterns, reset } = useSearchContext<string>()
+const filtered = phrases.filter(filterFunction)
+// rendering:
+<HighlightedTrimmedText text={phrase} fragmentLength={40} />
+```
+
+Import `HighlightedTrimmedText` instead of `HighlightedText` in both story files.
 
 ---
 
