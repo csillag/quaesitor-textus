@@ -91,4 +91,19 @@ describe('antd SearchInput', () => {
     expect(onReset).toHaveBeenCalledTimes(1)
     expect(screen.getByTestId('query')).toHaveTextContent('hello')
   })
+
+  it('connects to the named WithSearch when name prop is given', () => {
+    const NamedQuery = () => {
+      const { query } = useSearchContext('myfield')
+      return <div data-testid="named-query">{query}</div>
+    }
+    render(
+      <WithSearch name="myfield">
+        <SearchInput placeholder="Search..." name="myfield" />
+        <NamedQuery />
+      </WithSearch>
+    )
+    fireEvent.change(screen.getByPlaceholderText('Search...'), { target: { value: 'test' } })
+    expect(screen.getByTestId('named-query')).toHaveTextContent('test')
+  })
 })

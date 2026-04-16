@@ -3,8 +3,14 @@ import { Input } from 'antd'
 import type { InputProps } from 'antd'
 import { useSearchContext } from '@quaesitor-textus/core'
 
-export function SearchInput(props: Omit<InputProps, 'value' | 'onChange' | 'suffix'>) {
-  const { query, setQuery, reset } = useSearchContext()
+const DEFAULT_SEARCH_NAME = 'default search'
+
+interface SearchInputProps extends Omit<InputProps, 'value' | 'onChange' | 'suffix'> {
+  name?: string
+}
+
+export function SearchInput({ name = DEFAULT_SEARCH_NAME, ...props }: SearchInputProps) {
+  const { query, setQuery, reset } = useSearchContext(name)
   return (
     <Input
       {...props}
@@ -19,7 +25,9 @@ export function SearchInput(props: Omit<InputProps, 'value' | 'onChange' | 'suff
           >
             ×
           </span>
-        ) : <span />
+        ) : (
+          <span />
+        )
       }
     />
   )
