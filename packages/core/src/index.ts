@@ -4,6 +4,8 @@ export { parseInput } from './logic/parseInput'
 export { normalizeText } from './logic/normalizeText'
 export { matchItem } from './logic/matchItem'
 export { getHighlightPositions } from './logic/getHighlightPositions'
+export { trimAroundMatch } from './logic/trimAroundMatch'
+export type { TrimOptions } from './logic/trimAroundMatch'
 
 // React hooks
 export { useSearch } from './hooks/useSearch'
