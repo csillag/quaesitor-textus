@@ -46,16 +46,22 @@ publish: publish-core publish-antd
 publish-patch-version:
 	cd packages/core && npm version patch --no-git-tag-version
 	cd packages/antd && npm version patch --no-git-tag-version
+	git add packages/core/package.json packages/antd/package.json
+	VERSION=$$(node -p "require('./packages/core/package.json').version") && git commit -m "chore: release v$$VERSION"
 	$(MAKE) publish
 
 publish-minor-version:
 	cd packages/core && npm version minor --no-git-tag-version
 	cd packages/antd && npm version minor --no-git-tag-version
+	git add packages/core/package.json packages/antd/package.json
+	VERSION=$$(node -p "require('./packages/core/package.json').version") && git commit -m "chore: release v$$VERSION"
 	$(MAKE) publish
 
 publish-major-version:
 	cd packages/core && npm version major --no-git-tag-version
 	cd packages/antd && npm version major --no-git-tag-version
+	git add packages/core/package.json packages/antd/package.json
+	VERSION=$$(node -p "require('./packages/core/package.json').version") && git commit -m "chore: release v$$VERSION"
 	$(MAKE) publish
 
 dev-tools: $(VENV)/bin/activate
