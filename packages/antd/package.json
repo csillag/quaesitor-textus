@@ -26,7 +26,7 @@
     "url": "https://github.com/csillag/quaesitor-textus.git",
     "directory": "packages/antd"
   },
-  "homepage": "https://csillag.github.io/quaesitor-textus/",
+  "homepage": "https://csillag.github.io/quaesitor-textus/antd/",
   "publishConfig": {
     "access": "public"
   },

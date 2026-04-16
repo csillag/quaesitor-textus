@@ -29,7 +29,7 @@
     "url": "https://github.com/csillag/quaesitor-textus.git",
     "directory": "packages/core"
   },
-  "homepage": "https://csillag.github.io/quaesitor-textus/",
+  "homepage": "https://csillag.github.io/quaesitor-textus/core/",
   "publishConfig": {
     "access": "public"
   },
