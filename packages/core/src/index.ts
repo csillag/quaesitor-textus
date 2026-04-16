@@ -10,11 +10,13 @@ export type { TrimOptions } from './logic/trimAroundMatch'
 // React hooks
 export { useSearch } from './hooks/useSearch'
 export type { UseSearchResult } from './hooks/useSearch'
+export { useFilterFunction } from './hooks/useFilterFunction'
 
 // Context
 export { WithSearch } from './context/WithSearch'
 export { useSearchContext } from './context/useSearchContext'
-export type { SearchContextValue } from './context/SearchContext'
+export { DEFAULT_SEARCH_NAME } from './context/SearchContext'
+export type { SearchEntry, SearchContextValue } from './context/SearchContext'
 export type { WithSearchProps } from './context/WithSearch'
 
 // Components

@@ -1,9 +1,7 @@
 import React from 'react'
 import { Input } from 'antd'
 import type { InputProps } from 'antd'
-import { useSearchContext } from '@quaesitor-textus/core'
-
-const DEFAULT_SEARCH_NAME = 'default search'
+import { useSearchContext, DEFAULT_SEARCH_NAME } from '@quaesitor-textus/core'
 
 interface SearchInputProps extends Omit<InputProps, 'value' | 'onChange' | 'suffix'> {
   name?: string
