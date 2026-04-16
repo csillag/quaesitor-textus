@@ -6,3 +6,4 @@ storybook-static/
 
 *storybook.log
 .worktrees/
+docs-local/
