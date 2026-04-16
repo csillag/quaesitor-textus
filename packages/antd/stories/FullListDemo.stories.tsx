@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react'
 import React, { useState, useEffect } from 'react'
 import { Table, Card } from 'antd'
 import type { TableColumnsType } from 'antd'
-import { WithSearch, HighlightedTrimmedText, useSearchContext } from '@quaesitor-textus/core'
+import { WithSearch, HighlightedTrimmedText, useSearchContext, useFilterFunction } from '@quaesitor-textus/core'
 import { SearchInput } from '../src'
 import { sentences } from './data/sentences'
 
@@ -20,7 +20,8 @@ interface FullListProps {
 }
 
 const FullList = ({ currentPage, setCurrentPage }: FullListProps) => {
-  const { filterFunction, hasPatterns, reset } = useSearchContext<string>()
+  const { hasPatterns, reset } = useSearchContext()
+  const filterFunction = useFilterFunction<string>()
   const filtered = sentences.filter(filterFunction)
   const [selectedSentence, setSelectedSentence] = useState<string | null>(null)
 
@@ -38,7 +39,9 @@ const FullList = ({ currentPage, setCurrentPage }: FullListProps) => {
     {
       title: 'Sentence',
       dataIndex: 'sentence',
-      render: (sentence: string) => <HighlightedTrimmedText text={sentence} fragmentLength={40} />,
+      render: (sentence: string) => (
+        <HighlightedTrimmedText text={sentence} fragmentLength={40} all />
+      ),
     },
   ]
 

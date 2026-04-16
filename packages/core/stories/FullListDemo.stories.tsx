@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import React, { useState, useEffect } from 'react'
-import { WithSearch, SearchInput, HighlightedTrimmedText, useSearchContext } from '../src'
+import { WithSearch, SearchInput, HighlightedTrimmedText, useSearchContext, useFilterFunction } from '../src'
 import { sentences } from './data/sentences'
 
 const meta: Meta = {
@@ -10,7 +10,8 @@ const meta: Meta = {
 export default meta
 
 const FullList = () => {
-  const { filterFunction, hasPatterns, reset } = useSearchContext<string>()
+  const { hasPatterns, reset } = useSearchContext()
+  const filterFunction = useFilterFunction<string>()
   const filtered = sentences.filter(filterFunction)
   const [selectedSentence, setSelectedSentence] = useState<string | null>(null)
 
@@ -43,7 +44,7 @@ const FullList = () => {
           <ul style={{ paddingLeft: 20, margin: 0 }}>
             {filtered.map(sentence => (
               <li key={sentence} style={{ marginBottom: 4 }}>
-                <HighlightedTrimmedText text={sentence} fragmentLength={40} />
+                <HighlightedTrimmedText text={sentence} fragmentLength={40} all />
               </li>
             ))}
           </ul>
