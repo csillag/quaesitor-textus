@@ -90,3 +90,52 @@ If an entry has patterns but no `mapping` was provided to its `WithSearch`, the 
 - `highlightedPatterns` field removed from `SearchContextValue` and all usages.
 - `filterFunction` removed from `useSearchContext` return value and its internal construction logic.
 - The `upstreamCtx` read and merge in `WithSearch` is removed.
+
+## BookSearchDemo story (core and antd)
+
+A new story demonstrating multi-field search over a list of 500 classical books.
+
+### Data model and test data file
+
+```ts
+interface Book {
+  author: string
+  title: string
+  year: number
+}
+```
+
+A shared data file (`stories/data/books.ts`) exports an array of 500 classical books with `author`, `title`, and `year`. The file is shared between both storybook packages (or duplicated if the packages cannot share files).
+
+### Story structure
+
+Both stories use two nested `WithSearch` providers:
+
+```tsx
+<WithSearch name="author" mapping={(book: Book) => book.author}>
+  <WithSearch name="title" mapping={(book: Book) => book.title}>
+    <BookSearchDemo />
+  </WithSearch>
+</WithSearch>
+```
+
+Inside `BookSearchDemo`:
+- Two `SearchInput` fields side by side: `name="author"` with placeholder `"Search for author"`, and `name="title"` with placeholder `"Search for title"`.
+- A mode toggle switch (AND / OR) that controls the `mode` passed to `useFilterFunction<Book>`.
+- `useFilterFunction<Book>(mode)` produces the filter function applied to the books array.
+- A match count line (e.g. `"42 of 500 books"`) shown when either search has patterns.
+
+### Result rendering
+
+Each row shows:
+- Author: `<HighlightedText text={book.author} searchNames={["author"]} />`
+- Title: `<HighlightedText text={book.title} searchNames={["title"]} />`
+- Year: plain text, no highlighting.
+
+### Core story
+
+Plain `<ul>` list, one `<li>` per book, following the same style as `FullListDemo` in the core package. Show all results (no pagination).
+
+### Antd story
+
+`<Table>` with pagination (pageSize 10), following the same pattern as `FullListDemo` in the antd package. Three columns: Author, Title, Year. No enter-to-select behaviour needed.
