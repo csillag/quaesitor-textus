@@ -1,5 +1,5 @@
 import React, { useContext } from 'react'
-import type { SearchOptions } from '../logic'
+import type { SearchOptions } from '../logic/types'
 import { SearchContext } from '../context/SearchContext'
 import { trimAroundMatch } from '../logic/trimAroundMatch'
 import { HighlightedText } from './HighlightedText'
@@ -7,6 +7,7 @@ import { HighlightedText } from './HighlightedText'
 interface HighlightedTrimmedTextProps {
   text: string | undefined
   fragmentLength?: number
+  /** Search options applied to both trimming (window placement) and highlight rendering. */
   options?: SearchOptions
   markStyle?: React.CSSProperties
 }
