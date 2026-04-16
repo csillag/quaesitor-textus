@@ -88,4 +88,19 @@ describe('SearchInput', () => {
     fireEvent.click(screen.getByRole('button', { name: /clear/i }))
     expect(screen.getByTestId('query')).toHaveTextContent('')
   })
+
+  it('connects to the named WithSearch when name prop is given', () => {
+    const NamedQuery = () => {
+      const { query } = useSearchContext('myfield')
+      return <div data-testid="named-query">{query}</div>
+    }
+    render(
+      <WithSearch name="myfield">
+        <SearchInput name="myfield" />
+        <NamedQuery />
+      </WithSearch>
+    )
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'test' } })
+    expect(screen.getByTestId('named-query')).toHaveTextContent('test')
+  })
 })
