@@ -35,12 +35,6 @@ export function WithSearch<T = unknown>({
 
   const upstreamMap = useContext(SearchContext)
 
-  if (name in upstreamMap) {
-    throw new Error(
-      `WithSearch: duplicate name "${name}". Each WithSearch in the same tree must have a unique name.`
-    )
-  }
-
   const entry: SearchEntry<unknown> = useMemo(
     () => ({
       query,
@@ -51,13 +45,17 @@ export function WithSearch<T = unknown>({
       mapping: mapping as (item: unknown) => string,
       options,
     }),
-    [query, setQuery, patterns, hasPatterns, reset, mapping, options]
+    [query, setQuery, patterns, hasPatterns, reset, mapping]
   )
 
-  const value = useMemo(
-    () => ({ ...upstreamMap, [name]: entry }),
-    [upstreamMap, name, entry]
-  )
+  const value = useMemo(() => {
+    if (name in upstreamMap) {
+      throw new Error(
+        `WithSearch: duplicate name "${name}". Each WithSearch in the same tree must have a unique name.`
+      )
+    }
+    return { ...upstreamMap, [name]: entry }
+  }, [upstreamMap, name, entry])
 
   return <SearchContext.Provider value={value}>{children}</SearchContext.Provider>
 }
