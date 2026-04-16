@@ -46,7 +46,7 @@ export function WithSearch({
 
   const highlightedPatterns = useMemo(
     () => [...new Set([...(upstreamCtx?.highlightedPatterns ?? []), ...patterns])],
-    [upstreamCtx, patterns]
+    [upstreamCtx?.highlightedPatterns, patterns]
   )
 
   const value: SearchContextValue = useMemo(
