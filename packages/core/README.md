@@ -25,7 +25,7 @@ const items = ['Apple', 'Banana', 'Cherry', 'Date', 'Elderberry']
 
 const FilteredList = () => {
   const { hasPatterns } = useSearchContext()
-  const filterFunction = useFilterFunction<string>()
+  const filterFunction = useFilterFunction()
   const results = items.filter(filterFunction)
   return (
     <ul>
