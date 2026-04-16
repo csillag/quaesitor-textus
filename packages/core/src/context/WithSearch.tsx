@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useContext, useMemo } from 'react'
 import { SearchContext } from './SearchContext'
 import type { SearchContextValue } from './SearchContext'
 import { matchItem } from '../logic/matchItem'
@@ -32,6 +32,8 @@ export function WithSearch({
     onChange,
   })
 
+  const upstreamCtx = useContext(SearchContext)
+
   const executeSearch = useMemo(
     (): SearchContextValue['executeSearch'] =>
       function executeSearch<T>(items: T[], getCorpus: (item: T) => string): T[] {
@@ -42,9 +44,14 @@ export function WithSearch({
     [patterns, caseSensitive, diacriticSensitive]
   )
 
+  const highlightedPatterns = useMemo(
+    () => [...new Set([...(upstreamCtx?.highlightedPatterns ?? []), ...patterns])],
+    [upstreamCtx, patterns]
+  )
+
   const value: SearchContextValue = useMemo(
-    () => ({ query, setQuery, patterns, executeSearch, hasPatterns, reset }),
-    [query, setQuery, patterns, executeSearch, hasPatterns, reset]
+    () => ({ query, setQuery, patterns, highlightedPatterns, executeSearch, hasPatterns, reset }),
+    [query, setQuery, patterns, highlightedPatterns, executeSearch, hasPatterns, reset]
   )
 
   return <SearchContext.Provider value={value}>{children}</SearchContext.Provider>

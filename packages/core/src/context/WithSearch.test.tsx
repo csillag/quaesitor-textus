@@ -27,6 +27,11 @@ const ResetConsumer = () => {
   return <button data-testid="reset" onClick={reset}>Reset</button>
 }
 
+const HighlightConsumer = () => {
+  const { highlightedPatterns } = useSearchContext()
+  return <div data-testid="highlighted">{highlightedPatterns.join(',')}</div>
+}
+
 const items: Item[] = [{ name: 'Apple' }, { name: 'Banana' }, { name: 'Cherry' }]
 const getCorpus = (i: Item) => i.name
 
@@ -167,5 +172,33 @@ describe('WithSearch + useSearchContext', () => {
     )
     fireEvent.click(screen.getByTestId('reset'))
     expect(onChange).toHaveBeenCalledWith('hello', '')
+  })
+
+  it('exposes highlightedPatterns equal to patterns', () => {
+    render(
+      <WithSearch>
+        <TestConsumer items={items} getCorpus={getCorpus} />
+        <HighlightConsumer />
+      </WithSearch>
+    )
+    fireEvent.change(screen.getByTestId('input'), { target: { value: 'apple' } })
+    expect(screen.getByTestId('highlighted')).toHaveTextContent('apple')
+  })
+
+  it('nested WithSearch accumulates highlightedPatterns from both levels', () => {
+    const InnerHighlight = () => {
+      const { highlightedPatterns } = useSearchContext()
+      return <div data-testid="inner-highlighted">{highlightedPatterns.join(',')}</div>
+    }
+    render(
+      <WithSearch query="apple">
+        <WithSearch query="banana">
+          <InnerHighlight />
+        </WithSearch>
+      </WithSearch>
+    )
+    const el = screen.getByTestId('inner-highlighted')
+    expect(el.textContent).toContain('apple')
+    expect(el.textContent).toContain('banana')
   })
 })

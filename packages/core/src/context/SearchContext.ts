@@ -4,6 +4,7 @@ export interface SearchContextValue {
   query: string
   setQuery: (q: string) => void
   patterns: string[]
+  highlightedPatterns: string[]
   executeSearch: <T>(items: T[], getCorpus: (item: T) => string) => T[]
   hasPatterns: boolean
   reset: () => void
