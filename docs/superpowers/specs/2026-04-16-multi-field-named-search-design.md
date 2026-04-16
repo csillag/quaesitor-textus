@@ -128,8 +128,8 @@ Inside `BookSearchDemo`:
 ### Result rendering
 
 Each row shows:
-- Author: `<HighlightedText text={book.author} searchNames={["author"]} />`
-- Title: `<HighlightedText text={book.title} searchNames={["title"]} />`
+- Author: `<HighlightedText text={book.author} searchNames="author" />`
+- Title: `<HighlightedText text={book.title} searchNames="title" />`
 - Year: plain text, no highlighting.
 
 ### Core story
