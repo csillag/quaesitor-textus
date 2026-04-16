@@ -1,5 +1,5 @@
-import React, { useContext } from 'react'
-import { SearchContext } from '../context/SearchContext'
+import React from 'react'
+import { useResolvedPatterns } from '../context/useResolvedPatterns'
 import { getHighlightPositions } from '../logic/getHighlightPositions'
 import type { SearchOptions } from '../logic/types'
 
@@ -11,8 +11,9 @@ const DEFAULT_MARK_STYLE: React.CSSProperties = {
 
 interface HighlightedTextProps {
   text: string | undefined
-  /** Additional patterns to highlight on top of any context highlightedPatterns. */
   patterns?: string[]
+  searchNames?: string | string[]
+  all?: boolean
   options?: SearchOptions
   markStyle?: React.CSSProperties
 }
@@ -20,19 +21,18 @@ interface HighlightedTextProps {
 export function HighlightedText({
   text,
   patterns: propPatterns,
+  searchNames,
+  all,
   options,
   markStyle = DEFAULT_MARK_STYLE,
 }: HighlightedTextProps) {
-  const ctx = useContext(SearchContext)
-  const patterns = [...new Set([...(ctx?.highlightedPatterns ?? []), ...(propPatterns ?? [])])]
+  const patterns = useResolvedPatterns(searchNames, all, propPatterns)
 
   if (text === undefined) return undefined
 
   const spans = getHighlightPositions(text, patterns, options)
 
-  if (spans.length === 0) {
-    return text
-  }
+  if (spans.length === 0) return text
 
   const nodes: React.ReactNode[] = []
   let cursor = 0
