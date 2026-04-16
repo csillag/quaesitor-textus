@@ -20,3 +20,4 @@ export type { WithSearchProps } from './context/WithSearch'
 // Components
 export { SearchInput } from './components/SearchInput'
 export { HighlightedText } from './components/HighlightedText'
+export { HighlightedTrimmedText } from './components/HighlightedTrimmedText'
