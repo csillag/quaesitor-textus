@@ -63,7 +63,7 @@ Uses `useSearchContext(name)` internally to connect to the correct map entry. Bo
 ## `HighlightedText`
 
 New props:
-- `searchNames?: string[]` — names of search entries whose patterns to include.
+- `searchNames?: string | string[]` — names of search entries whose patterns to include. A single string is treated as a one-element array.
 - `all?: boolean` — if true, include patterns from all entries in the map.
 
 Pattern resolution:
