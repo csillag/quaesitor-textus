@@ -20,6 +20,9 @@
     "test:watch": "vitest",
     "storybook": "storybook dev -p 6007"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@quaesitor-textus/core": "workspace:*"
   },
