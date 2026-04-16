@@ -1,4 +1,4 @@
-export const phrases: string[] = [
+export const sentences: string[] = [
   "The apple pie cooling on the windowsill filled the whole house with a warm cinnamon scent.",
   "She took her bicycle to the repair shop after the chain snapped on the way home.",
   "A curious yellow duck waddled across the garden path and into the flower bed.",
