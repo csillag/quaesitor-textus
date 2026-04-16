@@ -24,6 +24,12 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/csillag/quaesitor-textus.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://csillag.github.io/quaesitor-textus/",
   "publishConfig": {
     "access": "public"
   },
