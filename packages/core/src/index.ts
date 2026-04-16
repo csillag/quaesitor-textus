@@ -16,6 +16,7 @@ export { WithSearch } from './context/WithSearch'
 export { useSearchContext } from './context/useSearchContext'
 export type { SearchContextValue } from './context/SearchContext'
 export type { WithSearchProps } from './context/WithSearch'
+export type { ItemOptions } from './context/useSearchContext'
 
 // Components
 export { SearchInput } from './components/SearchInput'
