@@ -134,7 +134,8 @@ harvestStrings(['foo', ['bar']])                    // → ['foo', 'bar']
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `name` | `string` | `"default search"` | Name of this search entry in the context map. Must be unique within the tree. |
-| `mapping` | `(item: T) => string` | `String` | Extracts the searchable text from a domain object. Used by `useFilterFunction`. |
+| `field` | `string` | — | Dot-notation path to the field to search (e.g. `"name"`, `"meta.title"`). Use `"$"` for the item itself. |
+| `fields` | `string[]` | `["$"]` | Array of dot-notation paths. Mutually exclusive with `field`. Defaults to `["$"]` when neither is given. |
 | `options` | `SearchOptions` | — | Tokenisation options (case sensitivity, etc.). |
 | `query` | `string` | — | Controlled query value. |
 | `onSetQuery` | `(q: string) => void` | — | Called when the query changes (controlled mode). |
