@@ -8,7 +8,6 @@ import {
   useSearchContext,
 } from '../src'
 import { books } from './data/books'
-import type { Book } from './data/books'
 
 const meta: Meta = {
   title: 'Core/BookSearchDemo',
@@ -17,7 +16,7 @@ const meta: Meta = {
 export default meta
 
 const BookList = ({ mode }: { mode: 'AND' | 'OR' }) => {
-  const filterFunction = useFilterFunction<Book>(mode)
+  const filterFunction = useFilterFunction(mode)
   const { hasPatterns: authorHasPatterns } = useSearchContext('author')
   const { hasPatterns: titleHasPatterns } = useSearchContext('title')
   const hasPatterns = authorHasPatterns || titleHasPatterns
@@ -54,8 +53,8 @@ const BookSearchWrapper = () => {
   const [mode, setMode] = useState<'AND' | 'OR'>('AND')
 
   return (
-    <WithSearch name="author" mapping={(b: Book) => b.author}>
-      <WithSearch name="title" mapping={(b: Book) => b.title}>
+    <WithSearch name="author" field="author">
+      <WithSearch name="title" field="title">
         <div style={{ fontFamily: 'sans-serif', padding: 16, maxWidth: 640 }}>
           <h2 style={{ marginTop: 0 }}>Classical Book Search</h2>
           <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center' }}>

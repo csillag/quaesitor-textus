@@ -27,7 +27,7 @@ interface BookTableProps {
 }
 
 const BookTable = ({ mode, currentPage, setCurrentPage }: BookTableProps) => {
-  const filterFunction = useFilterFunction<Book>(mode)
+  const filterFunction = useFilterFunction(mode)
   const { hasPatterns: authorHasPatterns } = useSearchContext('author')
   const { hasPatterns: titleHasPatterns } = useSearchContext('title')
   const hasPatterns = authorHasPatterns || titleHasPatterns
@@ -84,8 +84,8 @@ const BookSearchWrapper = () => {
   const resetPage = () => setCurrentPage(1)
 
   return (
-    <WithSearch name="author" mapping={(b: Book) => b.author} onChange={resetPage}>
-      <WithSearch name="title" mapping={(b: Book) => b.title} onChange={resetPage}>
+    <WithSearch name="author" field="author" onChange={resetPage}>
+      <WithSearch name="title" field="title" onChange={resetPage}>
         <div style={{ fontFamily: 'sans-serif', padding: 16, maxWidth: 800 }}>
           <h2 style={{ marginTop: 0 }}>Classical Book Search</h2>
           <Space style={{ marginBottom: 12 }} wrap>
