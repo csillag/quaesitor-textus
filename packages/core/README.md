@@ -46,7 +46,7 @@ export const App = () => (
 )
 ```
 
-`WithSearch` owns the search state and makes it available to the tree. `SearchInput` reads and updates the query. `useFilterFunction()` returns a filter predicate to pass to `Array.filter`. `HighlightedText` with `all` highlights matches from all active searches in the tree.
+`WithSearch` owns the search state and makes it available to the tree. `SearchInput` reads and updates the query. `useFilterFunction()` returns a filter predicate to pass to `Array.filter`. `HighlightedText` highlights matches from the active search automatically.
 
 ## Multi-field search
 
