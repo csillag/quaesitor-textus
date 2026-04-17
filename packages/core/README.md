@@ -31,7 +31,7 @@ const FilteredList = () => {
     <ul>
       {results.map(item => (
         <li key={item}>
-          <HighlightedText text={item} all />
+          <HighlightedText text={item} />
         </li>
       ))}
     </ul>
@@ -83,8 +83,8 @@ const BookList = () => {
 }
 
 export const App = () => (
-  <WithSearch name="author" field="author">
-    <WithSearch name="title" field="title">
+  <WithSearch field="author">
+    <WithSearch field="title">
       <SearchInput name="author" placeholder="Search author…" />
       <SearchInput name="title" placeholder="Search title…" />
       <BookList />
@@ -133,7 +133,7 @@ harvestStrings(['foo', ['bar']])                    // → ['foo', 'bar']
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `name` | `string` | `"default search"` | Name of this search entry in the context map. Must be unique within the tree. |
+| `name` | `string` | derived from `field`/`fields` (e.g. `"author"`, `"title+year"`, `"$"`) | Name of this search entry in the context map. Must be unique within the tree. |
 | `field` | `string` | — | Dot-notation path to the field to search (e.g. `"name"`, `"meta.title"`). Use `"$"` for the item itself. |
 | `fields` | `string[]` | `["$"]` | Array of dot-notation paths. Mutually exclusive with `field`. Defaults to `["$"]` when neither is given. |
 | `options` | `SearchOptions` | — | Tokenisation options (case sensitivity, etc.). |
@@ -169,7 +169,7 @@ function useSearchContext(name?: string): {
 }
 ```
 
-Looks up the named entry in the context map. `name` defaults to `"default search"`. Throws if the name is not found.
+Looks up the named entry in the context map. When `name` is omitted: if exactly one `WithSearch` is active, returns it; if zero or more than one, throws. Throws if the named entry is not found.
 
 ### `<HighlightedText>`
 
@@ -182,7 +182,7 @@ Looks up the named entry in the context map. `name` defaults to `"default search
 | `options` | `SearchOptions` | Tokenisation options. |
 | `markStyle` | `CSSProperties` | Style applied to `<mark>` elements. |
 
-At least one of `searchNames`, `all`, or `patterns` must be supplied to see highlights.
+When none of `searchNames`, `all`, or `patterns` is given, highlights from the single active search automatically (no-op when zero or multiple searches are active).
 
 ### `<HighlightedTrimmedText>`
 

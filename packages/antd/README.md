@@ -26,7 +26,7 @@ const FilteredList = () => {
     <ul>
       {results.map(item => (
         <li key={item}>
-          <HighlightedText text={item} all />
+          <HighlightedText text={item} />
         </li>
       ))}
     </ul>
@@ -72,8 +72,8 @@ const BookList = () => {
 }
 
 export const App = () => (
-  <WithSearch name="author" field="author">
-    <WithSearch name="title" field="title">
+  <WithSearch field="author">
+    <WithSearch field="title">
       <SearchInput name="author" placeholder="Search author…" />
       <SearchInput name="title" placeholder="Search title…" />
       <BookList />
@@ -86,7 +86,7 @@ export const App = () => (
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `name` | `string` | `"default search"` | Name of the `WithSearch` entry this input controls. |
+| `name` | `string` | auto (single search) or required when multiple | Name of the `WithSearch` entry this input controls. |
 | …rest | `InputProps` | — | All other antd `Input` props except `value`, `onChange`, and `suffix`. |
 
 For `WithSearch`, `useFilterFunction`, `useSearchContext`, `HighlightedText`, and `HighlightedTrimmedText` see the [@quaesitor-textus/core docs](https://github.com/csillag/quaesitor-textus/tree/main/packages/core).
