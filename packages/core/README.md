@@ -146,7 +146,7 @@ harvestStrings(['foo', ['bar']])                    // → ['foo', 'bar']
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `name` | `string` | `"default search"` | Name of the `WithSearch` entry this input controls. |
+| `name` | `string` | auto (single search) or required when multiple | Name of the `WithSearch` entry this input controls. |
 | …rest | `InputHTMLAttributes` | — | All other `<input>` props except `value`, `onChange`, and `type`. |
 
 ### `useFilterFunction(mode?)`
