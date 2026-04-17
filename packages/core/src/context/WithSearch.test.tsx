@@ -229,4 +229,35 @@ describe('WithSearch + useSearchContext', () => {
     ).toThrow('WithSearch: cannot specify both `field` and `fields`.')
     spy.mockRestore()
   })
+
+  it('useSearchContext with no name finds the single entry regardless of its name', () => {
+    render(
+      <WithSearch name="author">
+        <QueryDisplay />
+      </WithSearch>
+    )
+    expect(screen.getByTestId('input')).toHaveValue('')
+  })
+
+  it('useSearchContext with no name throws when context is empty', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    expect(() =>
+      render(<QueryDisplay />)
+    ).toThrow('useSearchContext: no WithSearch found in the tree')
+    spy.mockRestore()
+  })
+
+  it('useSearchContext with no name throws when multiple searches are active', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    expect(() =>
+      render(
+        <WithSearch name="author">
+          <WithSearch name="title">
+            <QueryDisplay />
+          </WithSearch>
+        </WithSearch>
+      )
+    ).toThrow('useSearchContext: found 2 searches in context')
+    spy.mockRestore()
+  })
 })
