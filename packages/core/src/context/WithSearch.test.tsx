@@ -222,7 +222,7 @@ describe('WithSearch + useSearchContext', () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
     expect(() =>
       render(
-        <WithSearch field="name" fields={['name', 'title']}>
+        <WithSearch {...{ field: 'name', fields: ['name', 'title'] } as any}>
           <div />
         </WithSearch>
       )
