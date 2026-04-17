@@ -1,5 +1,5 @@
 import React, { useContext, useMemo } from 'react'
-import { SearchContext, DEFAULT_SEARCH_NAME } from './SearchContext'
+import { SearchContext } from './SearchContext'
 import type { SearchEntry } from './SearchContext'
 import type { SearchOptions } from '../logic/types'
 import { useSearchInternalState } from '../hooks/useSearchInternalState'
@@ -21,7 +21,7 @@ export type WithSearchProps = WithSearchBaseProps & (
 )
 
 export function WithSearch({
-  name = DEFAULT_SEARCH_NAME,
+  name: nameProp,
   field,
   fields,
   options,
@@ -34,6 +34,9 @@ export function WithSearch({
   if (field !== undefined && fields !== undefined) {
     throw new Error('WithSearch: cannot specify both `field` and `fields`.')
   }
+
+  const resolvedFields = field !== undefined ? [field] : (fields ?? ['$'])
+  const name = nameProp ?? resolvedFields.join('+')
 
   const { query, setQuery, patterns, hasPatterns, reset } = useSearchInternalState({
     options,

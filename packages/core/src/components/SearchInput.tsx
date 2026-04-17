@@ -1,12 +1,11 @@
 import React from 'react'
 import { useSearchContext } from '../context/useSearchContext'
-import { DEFAULT_SEARCH_NAME } from '../context/SearchContext'
 
 type SearchInputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange' | 'type'> & {
   name?: string
 }
 
-export function SearchInput({ name = DEFAULT_SEARCH_NAME, style, ...props }: SearchInputProps) {
+export function SearchInput({ name, style, ...props }: SearchInputProps) {
   const { query, setQuery, reset } = useSearchContext(name)
   return (
     <div style={{ position: 'relative', display: 'inline-block', width: style?.width ?? undefined }}>

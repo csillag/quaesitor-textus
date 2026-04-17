@@ -59,7 +59,7 @@ describe('HighlightedText', () => {
     const { container } = render(
       <WithSearch>
         <Setter />
-        <HighlightedText text="hello world" searchNames="default search" />
+        <HighlightedText text="hello world" searchNames="$" />
       </WithSearch>
     )
     await act(async () => {})
