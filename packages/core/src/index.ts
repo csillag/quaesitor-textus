@@ -17,7 +17,6 @@ export { useFilterFunction } from './hooks/useFilterFunction'
 // Context
 export { WithSearch } from './context/WithSearch'
 export { useSearchContext } from './context/useSearchContext'
-export { DEFAULT_SEARCH_NAME } from './context/SearchContext'
 export type { SearchEntry, SearchContextValue } from './context/SearchContext'
 export type { WithSearchProps } from './context/WithSearch'
 

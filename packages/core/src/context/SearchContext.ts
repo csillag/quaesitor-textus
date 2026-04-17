@@ -1,8 +1,6 @@
 import { createContext } from 'react'
 import type { SearchOptions } from '../logic/types'
 
-export const DEFAULT_SEARCH_NAME = 'default search'
-
 export interface SearchEntry {
   query: string
   setQuery: (q: string) => void
