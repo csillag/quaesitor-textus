@@ -93,7 +93,7 @@ export const App = () => (
 )
 ```
 
-`useFilterFunction<T>()` defaults to AND mode — an item must match every active search field. Pass `'OR'` to match any:
+`useFilterFunction()` defaults to AND mode — an item must match every active search field. Pass `'OR'` to match any:
 
 ```tsx
 const filterFunction = useFilterFunction('OR')
@@ -149,10 +149,10 @@ harvestStrings(['foo', ['bar']])                    // → ['foo', 'bar']
 | `name` | `string` | `"default search"` | Name of the `WithSearch` entry this input controls. |
 | …rest | `InputHTMLAttributes` | — | All other `<input>` props except `value`, `onChange`, and `type`. |
 
-### `useFilterFunction<T>(mode?)`
+### `useFilterFunction(mode?)`
 
 ```ts
-function useFilterFunction<T>(mode?: 'AND' | 'OR'): (item: T) => boolean
+function useFilterFunction(mode?: 'AND' | 'OR'): (item: unknown) => boolean
 ```
 
 Returns a filter predicate over the current context map. Entries with no active patterns are neutral and do not affect the result. `mode` defaults to `'AND'`.
