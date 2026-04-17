@@ -57,7 +57,7 @@ const books: Book[] = [
 ]
 
 const BookList = () => {
-  const filterFunction = useFilterFunction<Book>()
+  const filterFunction = useFilterFunction()
   return (
     <ul>
       {books.filter(filterFunction).map((book, i) => (
@@ -72,8 +72,8 @@ const BookList = () => {
 }
 
 export const App = () => (
-  <WithSearch name="author" mapping={(b: Book) => b.author}>
-    <WithSearch name="title" mapping={(b: Book) => b.title}>
+  <WithSearch name="author" field="author">
+    <WithSearch name="title" field="title">
       <SearchInput name="author" placeholder="Search author…" />
       <SearchInput name="title" placeholder="Search title…" />
       <BookList />

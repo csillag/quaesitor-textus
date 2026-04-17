@@ -50,7 +50,7 @@ export const App = () => (
 
 ## Multi-field search
 
-Each `WithSearch` takes a `name` and a `mapping` — a function that extracts the searchable text from an item. Nest them to search across multiple fields independently.
+Each `WithSearch` takes a `name` and a `field` — the dot-notation path to the property to search on each item. Use `fields` to search multiple properties of the same item within one context. Nest `WithSearch` providers to search across independent fields with separate inputs.
 
 ```tsx
 import {
@@ -68,7 +68,7 @@ const books: Book[] = [
 ]
 
 const BookList = () => {
-  const filterFunction = useFilterFunction<Book>()
+  const filterFunction = useFilterFunction()
   return (
     <ul>
       {books.filter(filterFunction).map((book, i) => (
@@ -83,8 +83,8 @@ const BookList = () => {
 }
 
 export const App = () => (
-  <WithSearch name="author" mapping={(b: Book) => b.author}>
-    <WithSearch name="title" mapping={(b: Book) => b.title}>
+  <WithSearch name="author" field="author">
+    <WithSearch name="title" field="title">
       <SearchInput name="author" placeholder="Search author…" />
       <SearchInput name="title" placeholder="Search title…" />
       <BookList />
@@ -96,7 +96,35 @@ export const App = () => (
 `useFilterFunction<T>()` defaults to AND mode — an item must match every active search field. Pass `'OR'` to match any:
 
 ```tsx
-const filterFunction = useFilterFunction<Book>('OR')
+const filterFunction = useFilterFunction('OR')
+```
+
+## Field path syntax
+
+`field` (or each entry in `fields`) is a dot-notation path evaluated against each item:
+
+| Path | Resolves to |
+|------|-------------|
+| `"$"` | The item itself (default when no `field`/`fields` given) |
+| `"name"` | `item.name` |
+| `"metadata.title"` | `item.metadata.title` |
+
+Arrays at any point in the path are flattened: all leaf string values are collected and joined. Non-string primitives (numbers, booleans) are coerced via `String()`. Nullish values are skipped.
+
+## Utility exports
+
+`getByPath` and `harvestStrings` are exported for advanced use:
+
+```tsx
+import { getByPath, harvestStrings } from '@quaesitor-textus/core'
+
+// Traverse a dot-notation path
+getByPath({ meta: { title: 'T' } }, 'meta.title') // → 'T'
+getByPath(obj, '$')                                // → obj itself
+
+// Collect all leaf primitive values as strings
+harvestStrings({ name: 'Alice', age: 30 })         // → ['Alice', '30']
+harvestStrings(['foo', ['bar']])                    // → ['foo', 'bar']
 ```
 
 ## API
