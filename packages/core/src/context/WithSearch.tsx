@@ -4,9 +4,8 @@ import type { SearchEntry } from './SearchContext'
 import type { SearchOptions } from '../logic/types'
 import { useSearchInternalState } from '../hooks/useSearchInternalState'
 
-export interface WithSearchProps<T = unknown> {
+type WithSearchBaseProps = {
   name?: string
-  mapping?: (item: T) => string
   options?: SearchOptions
   children: React.ReactNode
   query?: string
@@ -15,16 +14,27 @@ export interface WithSearchProps<T = unknown> {
   onChange?: (oldValue: string, newValue: string) => void
 }
 
-export function WithSearch<T = unknown>({
+export type WithSearchProps = WithSearchBaseProps & (
+  | { field?: never; fields?: never }
+  | { field: string; fields?: never }
+  | { fields: string[]; field?: never }
+)
+
+export function WithSearch({
   name = DEFAULT_SEARCH_NAME,
-  mapping = String as (item: unknown) => string,
+  field,
+  fields,
   options,
   children,
   query: controlledQuery,
   onSetQuery,
   onReset,
   onChange,
-}: WithSearchProps<T>) {
+}: WithSearchProps) {
+  if (field !== undefined && fields !== undefined) {
+    throw new Error('WithSearch: cannot specify both `field` and `fields`.')
+  }
+
   const { query, setQuery, patterns, hasPatterns, reset } = useSearchInternalState({
     options,
     query: controlledQuery,
@@ -35,17 +45,17 @@ export function WithSearch<T = unknown>({
 
   const upstreamMap = useContext(SearchContext)
 
-  const entry: SearchEntry<unknown> = useMemo(
+  const entry: SearchEntry = useMemo(
     () => ({
       query,
       setQuery,
       patterns,
       hasPatterns,
       reset,
-      mapping: mapping as (item: unknown) => string,
+      fields: field !== undefined ? [field] : (fields ?? ['$']),
       options,
     }),
-    [query, setQuery, patterns, hasPatterns, reset, mapping]
+    [query, setQuery, patterns, hasPatterns, reset, field, fields, options]
   )
 
   const value = useMemo(() => {

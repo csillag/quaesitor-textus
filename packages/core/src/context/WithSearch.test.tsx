@@ -176,32 +176,57 @@ describe('WithSearch + useSearchContext', () => {
     expect(onChange).toHaveBeenCalledWith('apple', '')
   })
 
-  it('stores mapping function in the context entry', () => {
-    const mapping = (s: string) => s.toUpperCase()
-    const MapCheck = () => {
+  it('stores fields in the context entry', () => {
+    const FieldsCheck = () => {
       const map = React.useContext(SearchContext)
       const entry = map['default search']
-      return <div data-testid="mapped">{entry?.mapping('hello')}</div>
+      return <div data-testid="fields">{entry?.fields.join(',')}</div>
     }
     render(
-      <WithSearch mapping={mapping}>
-        <MapCheck />
+      <WithSearch fields={['author', 'title']}>
+        <FieldsCheck />
       </WithSearch>
     )
-    expect(screen.getByTestId('mapped')).toHaveTextContent('HELLO')
+    expect(screen.getByTestId('fields')).toHaveTextContent('author,title')
   })
 
-  it('default mapping converts item to string', () => {
-    const MapCheck = () => {
+  it('field prop is stored as a single-element array', () => {
+    const FieldsCheck = () => {
       const map = React.useContext(SearchContext)
       const entry = map['default search']
-      return <div data-testid="mapped">{entry?.mapping(42)}</div>
+      return <div data-testid="fields">{entry?.fields.join(',')}</div>
+    }
+    render(
+      <WithSearch field="name">
+        <FieldsCheck />
+      </WithSearch>
+    )
+    expect(screen.getByTestId('fields')).toHaveTextContent('name')
+  })
+
+  it('defaults fields to ["$"] when neither field nor fields is provided', () => {
+    const FieldsCheck = () => {
+      const map = React.useContext(SearchContext)
+      const entry = map['default search']
+      return <div data-testid="fields">{entry?.fields.join(',')}</div>
     }
     render(
       <WithSearch>
-        <MapCheck />
+        <FieldsCheck />
       </WithSearch>
     )
-    expect(screen.getByTestId('mapped')).toHaveTextContent('42')
+    expect(screen.getByTestId('fields')).toHaveTextContent('$')
+  })
+
+  it('throws when both field and fields are provided', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    expect(() =>
+      render(
+        <WithSearch field="name" fields={['name', 'title']}>
+          <div />
+        </WithSearch>
+      )
+    ).toThrow('WithSearch: cannot specify both `field` and `fields`.')
+    spy.mockRestore()
   })
 })

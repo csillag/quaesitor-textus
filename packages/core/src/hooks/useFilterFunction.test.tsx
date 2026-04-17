@@ -17,8 +17,8 @@ const books: Book[] = [
 
 const makeWrapper = (authorQuery = '', titleQuery = '') =>
   ({ children }: { children: React.ReactNode }) => (
-    <WithSearch name="author" mapping={(b: Book) => b.author} query={authorQuery} onSetQuery={() => {}}>
-      <WithSearch name="title" mapping={(b: Book) => b.title} query={titleQuery} onSetQuery={() => {}}>
+    <WithSearch name="author" field="author" query={authorQuery} onSetQuery={() => {}}>
+      <WithSearch name="title" field="title" query={titleQuery} onSetQuery={() => {}}>
         {children}
       </WithSearch>
     </WithSearch>
@@ -26,14 +26,14 @@ const makeWrapper = (authorQuery = '', titleQuery = '') =>
 
 describe('useFilterFunction', () => {
   it('returns true for all items when no searches have patterns', () => {
-    const { result } = renderHook(() => useFilterFunction<Book>(), {
+    const { result } = renderHook(() => useFilterFunction(), {
       wrapper: makeWrapper(),
     })
     expect(books.every(result.current)).toBe(true)
   })
 
   it('AND mode: returns true when all active searches match', () => {
-    const { result } = renderHook(() => useFilterFunction<Book>('AND'), {
+    const { result } = renderHook(() => useFilterFunction('AND'), {
       wrapper: makeWrapper('austen', ''),
     })
     expect(result.current(books[0])).toBe(true)
@@ -42,7 +42,7 @@ describe('useFilterFunction', () => {
 
   it('AND mode: returns false when any active search fails', () => {
     // author=austen, title=karenina — no book matches both
-    const { result } = renderHook(() => useFilterFunction<Book>('AND'), {
+    const { result } = renderHook(() => useFilterFunction('AND'), {
       wrapper: makeWrapper('austen', 'karenina'),
     })
     expect(result.current(books[0])).toBe(false) // austen matches author but not title
@@ -50,7 +50,7 @@ describe('useFilterFunction', () => {
   })
 
   it('AND mode is the default', () => {
-    const { result } = renderHook(() => useFilterFunction<Book>(), {
+    const { result } = renderHook(() => useFilterFunction(), {
       wrapper: makeWrapper('austen', ''),
     })
     expect(result.current(books[0])).toBe(true)
@@ -58,7 +58,7 @@ describe('useFilterFunction', () => {
   })
 
   it('OR mode: returns true when at least one active search matches', () => {
-    const { result } = renderHook(() => useFilterFunction<Book>('OR'), {
+    const { result } = renderHook(() => useFilterFunction('OR'), {
       wrapper: makeWrapper('austen', 'karenina'),
     })
     expect(result.current(books[0])).toBe(true)  // author matches 'austen'
@@ -67,7 +67,7 @@ describe('useFilterFunction', () => {
   })
 
   it('OR mode: returns false when no active search matches', () => {
-    const { result } = renderHook(() => useFilterFunction<Book>('OR'), {
+    const { result } = renderHook(() => useFilterFunction('OR'), {
       wrapper: makeWrapper('xyz', ''),
     })
     expect(books.some(result.current)).toBe(false)
@@ -75,7 +75,7 @@ describe('useFilterFunction', () => {
 
   it('entries with zero patterns are neutral in AND mode', () => {
     // title has no patterns — only author entry is active
-    const { result } = renderHook(() => useFilterFunction<Book>('AND'), {
+    const { result } = renderHook(() => useFilterFunction('AND'), {
       wrapper: makeWrapper('austen', ''),
     })
     expect(result.current(books[0])).toBe(true)
@@ -83,15 +83,15 @@ describe('useFilterFunction', () => {
   })
 
   it('entries with zero patterns are neutral in OR mode', () => {
-    const { result } = renderHook(() => useFilterFunction<Book>('OR'), {
+    const { result } = renderHook(() => useFilterFunction('OR'), {
       wrapper: makeWrapper('austen', ''),
     })
     expect(result.current(books[0])).toBe(true)
     expect(result.current(books[1])).toBe(false)
   })
 
-  it('uses mapping from the context entry', () => {
-    const { result } = renderHook(() => useFilterFunction<Book>('AND'), {
+  it('uses fields from the context entry', () => {
+    const { result } = renderHook(() => useFilterFunction('AND'), {
       wrapper: makeWrapper('', 'pride'),
     })
     expect(result.current(books[0])).toBe(true)  // "Pride and Prejudice" matches 'pride'
@@ -99,7 +99,7 @@ describe('useFilterFunction', () => {
   })
 
   it('returns true for all items when outside any WithSearch (empty map)', () => {
-    const { result } = renderHook(() => useFilterFunction<Book>())
+    const { result } = renderHook(() => useFilterFunction())
     expect(books.every(result.current)).toBe(true)
   })
 })
