@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import React from 'react'
 import { WithSearch } from '../context/WithSearch'
@@ -102,5 +102,19 @@ describe('SearchInput', () => {
     )
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'test' } })
     expect(screen.getByTestId('named-query')).toHaveTextContent('test')
+  })
+
+  it('throws when used without name inside 2 nested WithSearch contexts', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    expect(() =>
+      render(
+        <WithSearch name="author">
+          <WithSearch name="title">
+            <SearchInput />
+          </WithSearch>
+        </WithSearch>
+      )
+    ).toThrow('useSearchContext: found 2 searches in context')
+    spy.mockRestore()
   })
 })

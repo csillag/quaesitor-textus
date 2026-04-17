@@ -34,7 +34,7 @@ describe('HighlightedText', () => {
     expect(container.querySelectorAll('mark')).toHaveLength(1)
   })
 
-  it('shows no highlights when neither searchNames nor all is given', () => {
+  it('auto-picks single context entry patterns when no searchNames or all given', async () => {
     const Setter = () => {
       const { setQuery } = useSearchContext()
       React.useEffect(() => { setQuery('hello') }, [setQuery])
@@ -46,7 +46,25 @@ describe('HighlightedText', () => {
         <HighlightedText text="hello world" />
       </WithSearch>
     )
-    // No searchNames or all — context patterns not picked up
+    await act(async () => {})
+    expect(container.querySelector('mark')?.textContent).toBe('hello')
+  })
+
+  it('shows no context highlights when 2 searches are active and no searchNames or all given', async () => {
+    const Setter = () => {
+      const { setQuery } = useSearchContext('search1')
+      React.useEffect(() => { setQuery('hello') }, [setQuery])
+      return null
+    }
+    const { container } = render(
+      <WithSearch name="search1">
+        <WithSearch name="search2">
+          <Setter />
+          <HighlightedText text="hello world" />
+        </WithSearch>
+      </WithSearch>
+    )
+    await act(async () => {})
     expect(container.querySelector('mark')).toBeNull()
   })
 
@@ -59,7 +77,7 @@ describe('HighlightedText', () => {
     const { container } = render(
       <WithSearch>
         <Setter />
-        <HighlightedText text="hello world" searchNames="default search" />
+        <HighlightedText text="hello world" searchNames="$" />
       </WithSearch>
     )
     await act(async () => {})

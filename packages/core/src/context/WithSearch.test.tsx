@@ -53,9 +53,19 @@ describe('WithSearch + useSearchContext', () => {
     expect(screen.getByTestId('patterns')).toHaveTextContent('apple')
   })
 
-  it('defaults name to "default search"', () => {
+  it('defaults name to "$" when no field or fields given', () => {
     render(<WithSearch><MapKeys /></WithSearch>)
-    expect(screen.getByTestId('map-keys')).toHaveTextContent('default search')
+    expect(screen.getByTestId('map-keys')).toHaveTextContent('$')
+  })
+
+  it('defaults name to field value when field is given', () => {
+    render(<WithSearch field="author"><MapKeys /></WithSearch>)
+    expect(screen.getByTestId('map-keys')).toHaveTextContent('author')
+  })
+
+  it('defaults name to joined fields when fields is given', () => {
+    render(<WithSearch fields={['title', 'author']}><MapKeys /></WithSearch>)
+    expect(screen.getByTestId('map-keys')).toHaveTextContent('title+author')
   })
 
   it('uses provided name in the context map', () => {
@@ -179,7 +189,7 @@ describe('WithSearch + useSearchContext', () => {
   it('stores fields in the context entry', () => {
     const FieldsCheck = () => {
       const map = React.useContext(SearchContext)
-      const entry = map['default search']
+      const entry = map['author+title']
       return <div data-testid="fields">{entry?.fields.join(',')}</div>
     }
     render(
@@ -193,7 +203,7 @@ describe('WithSearch + useSearchContext', () => {
   it('field prop is stored as a single-element array', () => {
     const FieldsCheck = () => {
       const map = React.useContext(SearchContext)
-      const entry = map['default search']
+      const entry = map['name']
       return <div data-testid="fields">{entry?.fields.join(',')}</div>
     }
     render(
@@ -207,7 +217,7 @@ describe('WithSearch + useSearchContext', () => {
   it('defaults fields to ["$"] when neither field nor fields is provided', () => {
     const FieldsCheck = () => {
       const map = React.useContext(SearchContext)
-      const entry = map['default search']
+      const entry = map['$']
       return <div data-testid="fields">{entry?.fields.join(',')}</div>
     }
     render(
@@ -227,6 +237,37 @@ describe('WithSearch + useSearchContext', () => {
         </WithSearch>
       )
     ).toThrow('WithSearch: cannot specify both `field` and `fields`.')
+    spy.mockRestore()
+  })
+
+  it('useSearchContext with no name finds the single entry regardless of its name', () => {
+    render(
+      <WithSearch name="author">
+        <QueryDisplay />
+      </WithSearch>
+    )
+    expect(screen.getByTestId('input')).toHaveValue('')
+  })
+
+  it('useSearchContext with no name throws when context is empty', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    expect(() =>
+      render(<QueryDisplay />)
+    ).toThrow('useSearchContext: no WithSearch found in the tree')
+    spy.mockRestore()
+  })
+
+  it('useSearchContext with no name throws when multiple searches are active', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    expect(() =>
+      render(
+        <WithSearch name="author">
+          <WithSearch name="title">
+            <QueryDisplay />
+          </WithSearch>
+        </WithSearch>
+      )
+    ).toThrow('useSearchContext: found 2 searches in context')
     spy.mockRestore()
   })
 })
