@@ -26,6 +26,11 @@ export function useResolvedPatterns(
         }
         contextPatterns.push(...map[name].patterns)
       }
+    } else {
+      const entries = Object.values(map)
+      if (entries.length === 1) {
+        contextPatterns.push(...entries[0].patterns)
+      }
     }
 
     return [...new Set([...contextPatterns, ...(localPatterns ?? [])])]

@@ -1,8 +1,9 @@
 import React from 'react'
 import { describe, it, expect } from 'vitest'
-import { render } from '@testing-library/react'
+import { render, act } from '@testing-library/react'
 import { HighlightedTrimmedText } from './HighlightedTrimmedText'
 import { WithSearch } from '../context/WithSearch'
+import { useSearchContext } from '../context/useSearchContext'
 
 describe('HighlightedTrimmedText', () => {
   it('returns nothing when text is undefined', () => {
@@ -52,14 +53,21 @@ describe('HighlightedTrimmedText', () => {
     expect(container.querySelector('mark')?.textContent).toBe('brown')
   })
 
-  it('shows no highlights when neither searchNames nor all is given', () => {
+  it('auto-picks single context entry when neither searchNames nor all is given', async () => {
+    const Setter = () => {
+      const { setQuery } = useSearchContext()
+      React.useEffect(() => { setQuery('fox') }, [setQuery])
+      return null
+    }
     const { container } = render(
-      <WithSearch query="fox" onSetQuery={() => {}}>
+      <WithSearch>
+        <Setter />
         <span>
           <HighlightedTrimmedText text="The quick brown fox" />
         </span>
       </WithSearch>
     )
-    expect(container.querySelector('mark')).toBeNull()
+    await act(async () => {})
+    expect(container.querySelector('mark')?.textContent).toBe('fox')
   })
 })
