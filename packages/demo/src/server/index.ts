@@ -13,8 +13,17 @@ async function main() {
   const client = await MongoClient.connect(URL)
   const col = client.db('demo').collection('books')
 
-  // info-level app logs, but no per-request access-log dumps
-  const app = Fastify({ logger: { level: 'info' }, disableRequestLogging: true })
+  // info-level app logs, pretty-printed, without per-request access-log dumps
+  const app = Fastify({
+    disableRequestLogging: true,
+    logger: {
+      level: 'info',
+      transport: {
+        target: 'pino-pretty',
+        options: { translateTime: 'HH:MM:ss', ignore: 'pid,hostname' },
+      },
+    },
+  })
 
   await createSearchIndexes(col, demoConfig)
   startSearchSync(col, demoConfig, {
