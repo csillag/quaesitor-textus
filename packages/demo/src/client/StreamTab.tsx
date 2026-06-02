@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { List, Typography } from 'antd'
-import { HighlightedText } from '@quaesitor-textus/core'
+import { Table, Typography } from 'antd'
 import { liveSearchUrl, searchBooks } from './api'
+import { bookColumns } from './bookColumns'
 import { hasTextPattern } from '../shared/predicate'
 import type { DemoPredicate } from '../shared/predicate'
 import type { Book } from '../shared/generator'
@@ -58,14 +58,7 @@ export function StreamTab({ predicate, sort }: { predicate: DemoPredicate; sort:
       <Typography.Paragraph type="secondary">
         {sorted.length} matching books (live){capped ? ' — showing first 500' : ''}
       </Typography.Paragraph>
-      <List size="small" dataSource={sorted} rowKey={(b) => b._id}
-        renderItem={(b) => (
-          <List.Item>
-            <HighlightedText text={b.author} searchNames="author" />{' — '}
-            <HighlightedText text={b.title} searchNames="title" />{' '}
-            <span style={{ color: '#999', fontSize: 12 }}>({b.year})</span>
-          </List.Item>
-        )} />
+      <Table<Book> rowKey="_id" dataSource={sorted} columns={bookColumns} pagination={false} />
     </>
   )
 }

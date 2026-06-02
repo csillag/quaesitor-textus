@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Table, Button, Typography, Space } from 'antd'
-import type { TableColumnsType } from 'antd'
-import { HighlightedText } from '@quaesitor-textus/core'
 import { searchBooks } from './api'
+import { bookColumns } from './bookColumns'
 import type { DemoPredicate } from '../shared/predicate'
 import type { Book } from '../shared/generator'
 import type { Sort } from './App'
@@ -21,18 +20,13 @@ export function QueryTab({ predicate, sort }: { predicate: DemoPredicate; sort: 
     return () => { live = false }
   }, [predicate, sort, page, tick])
 
-  const columns: TableColumnsType<Book> = [
-    { title: 'Author', dataIndex: 'author', render: (a: string) => <HighlightedText text={a} searchNames="author" /> },
-    { title: 'Title', dataIndex: 'title', render: (t: string) => <HighlightedText text={t} searchNames="title" /> },
-    { title: 'Year', dataIndex: 'year', width: 90 },
-  ]
   return (
     <>
       <Space style={{ marginBottom: 8 }}>
         <Typography.Text type="secondary">{data.total} matching books</Typography.Text>
         <Button size="small" onClick={() => setTick(t => t + 1)}>Refresh</Button>
       </Space>
-      <Table<Book> rowKey="_id" dataSource={data.items} columns={columns}
+      <Table<Book> rowKey="_id" dataSource={data.items} columns={bookColumns}
         pagination={{ current: page, pageSize, total: data.total, onChange: setPage }} />
     </>
   )
