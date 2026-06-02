@@ -2,6 +2,7 @@ import type { ChangeStream, Collection } from 'mongodb'
 import type { MongoSearchConfig } from './config'
 import { DEFAULT_NAMESPACE } from './config'
 import { computeSearchFields } from './computeSearchFields'
+import { searchFieldsVersion } from './version'
 
 export type SearchSyncEvent =
   | { type: 'indexing-started' }
@@ -68,7 +69,12 @@ export function startSearchSync(
     const startedAt = Date.now()
     let n = 0
     emit({ type: 'indexing-started' })
-    const cursor = collection.find({ [ns]: { $exists: false } })
+    // Re-derive documents whose search fields are missing OR were derived under a
+    // different version (library upgrade or config change).
+    const version = searchFieldsVersion(config)
+    const cursor = collection.find({
+      $or: [{ [ns]: { $exists: false } }, { [`${ns}._v`]: { $ne: version } }],
+    })
     for await (const doc of cursor) {
       const derived = computeSearchFields(doc, config) as Record<string, unknown>
       await collection.updateOne({ _id: doc._id }, { $set: { [ns]: derived[ns] } }).catch(() => {})

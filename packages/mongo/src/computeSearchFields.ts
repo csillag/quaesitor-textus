@@ -2,6 +2,7 @@ import { buildCorpus, normalizeText, toNgrams } from '@quaesitor-textus/core'
 import type { MongoSearchConfig } from './config'
 import { DEFAULT_NAMESPACE, DEFAULT_NGRAM_SIZES } from './config'
 import { modeKey, targetModes } from './modes'
+import { searchFieldsVersion } from './version'
 
 export function computeSearchFields(
   doc: unknown,
@@ -23,5 +24,8 @@ export function computeSearchFields(
     }
     targets[name] = entry
   }
+  // Stamp the derivation version (code + config fingerprint) so a stale-aware
+  // backfill can detect and re-derive documents after an upgrade or config change.
+  targets._v = searchFieldsVersion(config)
   return { [ns]: targets }
 }

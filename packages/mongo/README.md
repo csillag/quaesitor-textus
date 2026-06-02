@@ -171,6 +171,8 @@ documents, while a separate Node app runs the watcher with `backfill: true` and 
 search. On boot the Node app catches up on everything written while it was down, then
 keeps current via the change stream. Backfill also requires a replica set.
 
+**Versioned re-indexing.** `computeSearchFields` stamps `_qt._v = \`${SEARCH_FIELDS_VERSION}:${fingerprint(config)}\`` on each derived block. `SEARCH_FIELDS_VERSION` (a code constant) is bumped on any change to the derived output (normalization, n-grams, corpus, shape); the fingerprint hashes the derivation-affecting config (namespace, n-gram sizes, targets). The `backfill` sweep re-derives documents whose stored `_v` differs from the current one, so **upgrading the library or changing your config automatically re-indexes the collection on the next start with `backfill: true`** — no manual migration. This is how a normalization change (e.g. the precomposed-letter folding in v2) invalidates and rebuilds existing data.
+
 **Trade-offs of the watcher:**
 
 - It **requires a replica set** (change streams are a replica-set feature).

@@ -88,10 +88,12 @@ MongoDB change streams are **forward-only**: `.watch()` only delivers events for
 
 `startSearchSync` gains an **opt-in `backfill` flag** (`StartSearchSyncOptions { idleMs?; backfill? }`). When `true`, on start it:
 1. opens the change stream **first** (so concurrent writes during the sweep are not missed),
-2. then sweeps documents missing the derived namespace (`{ [ns]: { $exists: false } }`), computing and writing their derived fields in a cursor loop,
+2. then sweeps documents that are **missing or stale** — `{ $or: [ { [ns]: { $exists: false } }, { [`${ns}._v`]: { $ne: <version> } } ] }` — computing and writing their derived fields in a cursor loop,
 3. relies on the existing loop-guard to dedup the overlap (sweep writes that the stream also reports compare-equal and are skipped).
 
-The sweep emits its own `indexing-started`/`indexing-finished` (with the backfilled count) for logging, but **not** per-doc `indexed` events (no live subscriptions exist at startup; a subscription created later picks up backfilled docs via its initial snapshot). The flag also makes restarts self-healing. Staleness detection is **existence-only** (missing `_qt` namespace); detecting docs whose source fields changed since derivation (e.g. after a config change) is a later refinement, out of scope here. The demo does not set `backfill` (its seed derives inline); it is documented for the external-writer use case.
+**Versioned re-indexing.** `computeSearchFields` stamps a version on the derived block: `_qt._v = \`${SEARCH_FIELDS_VERSION}:${fingerprint(config)}\``. `SEARCH_FIELDS_VERSION` is a code constant bumped on any change to derived *output* (normalizeText, toNgrams, buildCorpus, or the field shape); the fingerprint is an order-independent hash of the derivation-affecting config (namespace, n-gram sizes, targets). So **both** a library upgrade (e.g. the precomposed-letter folding) **and** a consumer config change make the stored version differ, and the next `backfill` sweep re-derives those documents. This is exactly how an existing collection is invalidated after a normalization change. (`SEARCH_FIELDS_VERSION` is currently `2` — `1` was the initial release, `2` adds precomposed-letter folding.)
+
+The sweep emits its own `indexing-started`/`indexing-finished` (with the backfilled count) for logging, but **not** per-doc `indexed` events (no live subscriptions exist at startup; a subscription created later picks up backfilled docs via its initial snapshot). The flag makes restarts self-healing and re-indexes on version bumps. Re-indexing requires `backfill: true`; without it the consumer re-indexes manually. The demo does not set `backfill` (its seed derives inline, stamping the current version); it is documented for the external-writer use case.
 
 ## Error handling
 
