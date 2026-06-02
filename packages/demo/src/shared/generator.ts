@@ -27,6 +27,8 @@ const AUTHORS = [
 const ADJ = ['Silent', 'Crimson', 'Hidden', 'Eternal', 'Broken', 'Golden', 'Distant', 'Hollow']
 const NOUN = ['Garden', 'River', 'Empire', 'Shadow', 'Mirror', 'Harvest', 'Lantern', 'Citadel']
 const RESERVED_INDEX = 1500 // lands inside the first truckload batch (1000..1999)
+// Sentinel author, exclusive to the first truckload batch; used to verify the watcher.
+export const SENTINEL_AUTHOR = 'Miguel Ángel Asturias'
 
 export function generateBooks(count: number = TOTAL_BOOKS): Book[] {
   const rand = mulberry32(0x9e3779b9)
@@ -43,7 +45,7 @@ export function generateBooks(count: number = TOTAL_BOOKS): Book[] {
       // Sentinel author exclusive to the first truckload batch (1000..1999) and
       // absent from the seeded classics — search "asturias" is empty before the
       // first truckload and hits after, verifying the change-stream watcher.
-      author = 'Miguel Ángel Asturias'
+      author = SENTINEL_AUTHOR
       title = 'El Señor Presidente'
       year = 1946
     } else {

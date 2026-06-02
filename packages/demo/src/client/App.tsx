@@ -73,14 +73,18 @@ export function App() {
     setTruckMsg('Delivering…')
     const r = await truckload()
     const left = 10000 - r.total
-    setTruckMsg(`Delivered ${r.inserted} (${left} left). Indexing in the background…`)
+    const hint = r.sampleAuthors.length ? ` New arrivals include: ${r.sampleAuthors.join(', ')}.` : ''
+    setTruckMsg(`Delivered ${r.inserted} (${left} left).${hint} Indexing in the background…`)
     // The change-stream watcher derives search fields asynchronously; refresh the
     // results a few times to reflect the newly-searchable books as they land.
     ;[1500, 3500, 6000].forEach(ms => setTimeout(() => setRefreshKey(k => k + 1), ms))
-    setTimeout(
-      () => setTruckMsg(`${r.total} books loaded${left ? `, ${left} left` : ''} — now searchable.`),
-      6200,
-    )
+    setTimeout(() => {
+      const try3 = r.sampleAuthors.slice(0, 3).join(', ')
+      setTruckMsg(
+        `${r.total} books loaded${left ? `, ${left} left` : ''} — now searchable.` +
+          (try3 ? ` Try searching author: ${try3}.` : ''),
+      )
+    }, 6200)
   }
 
   return (

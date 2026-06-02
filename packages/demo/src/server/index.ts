@@ -4,7 +4,7 @@ import { createSearchIndexes, startSearchSync } from '@quaesitor-textus/mongo'
 import { demoConfig } from '../shared/config'
 import { predicateToMongo } from '../shared/predicateToMongo'
 import type { DemoPredicate } from '../shared/predicate'
-import { generateBooks, TOTAL_BOOKS, TRUCK_SIZE } from '../shared/generator'
+import { generateBooks, TOTAL_BOOKS, TRUCK_SIZE, SENTINEL_AUTHOR } from '../shared/generator'
 
 const URL = process.env.MONGO_URL ?? 'mongodb://localhost:27018/?directConnection=true'
 const PORT = Number(process.env.PORT ?? 3001)
@@ -56,7 +56,14 @@ async function main() {
       await col.insertMany(batch as never[], { ordered: false })
     } catch { /* dup-key no-ops on re-click are expected */ }
     const total = await col.countDocuments({})
-    return { inserted: total - n, total }
+    // Surface a few distinct authors from this batch so the UI can hint what to
+    // search for (sentinel first when present — it proves the watcher).
+    const distinct = [...new Set(batch.map((b) => b.author))]
+    const sampleAuthors = (distinct.includes(SENTINEL_AUTHOR)
+      ? [SENTINEL_AUTHOR, ...distinct.filter((a) => a !== SENTINEL_AUTHOR)]
+      : distinct
+    ).slice(0, 6)
+    return { inserted: total - n, total, sampleAuthors }
   })
 
   await app.listen({ port: PORT, host: '0.0.0.0' })

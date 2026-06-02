@@ -14,7 +14,7 @@ export async function searchBooks(
   return res.json()
 }
 
-export async function truckload(): Promise<{ inserted: number; total: number }> {
+export async function truckload(): Promise<{ inserted: number; total: number; sampleAuthors: string[] }> {
   const res = await fetch('/api/truckload', { method: 'POST' })
   if (!res.ok) throw new Error(`truckload failed: ${res.status}`)
   return res.json()
