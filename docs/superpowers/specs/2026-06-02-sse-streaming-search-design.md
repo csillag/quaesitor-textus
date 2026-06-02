@@ -26,7 +26,7 @@ The current spec/codebase has **no sorting**; this adds it to both examples.
 
 Four layers in `@quaesitor-textus/mongo`, mirroring `optio-api` (transport-agnostic core → framework adapters):
 
-1. **Watcher events (Layer 0).** Extend `startSearchSync` to return a small **emitter** (`.on`/`.off`/`.stop`) instead of a single `onEvent` callback, so multiple consumers can subscribe. Events: `indexing-started`, `indexing-finished` (count, durationMs — existing, for logging) plus a new per-doc **`indexed` ({ id })** fired *after* the derive write resolves (so a text filter on `_qt.*` matches when tested).
+1. **Watcher events (Layer 0).** Extend `startSearchSync` to return a small **emitter** (`.on`/`.off`/`.stop`) instead of a single `onEvent` callback, so multiple consumers can subscribe. Events: `indexing-started`, `indexing-finished` (count, durationMs — existing, for logging) plus a new per-doc **`indexed` ({ id })** fired *after* the derive write resolves (so a text filter on `_qt.*` matches when tested). Also gains an opt-in **`backfill`** flag (see "Backfill / resilience").
 
 2. **Live-search engine (Layer 1) — transport-agnostic.** `createLiveSearch({ sync, collection, config, filter, sort?, cap, sendEvent }) → { stop }`:
    - emits a `snapshot` of current matches: `find(filter).sort(sort).limit(cap)`;
@@ -82,6 +82,17 @@ In `packages/demo/src/shared/generator.ts`:
 - Inject a **unique sentinel per truck batch** `k` (indices `[1000k, 1000k+1000)`): place `SENTINELS[k-1]` at index `1000k+500`. `SENTINELS` is ≥9 distinctive diacritic authors; `Miguel Ángel Asturias` = `SENTINELS[0]`.
 - Expose `batchSentinel(batch)` and `batchCommonAuthor(batch)` (a fixed pool author, ~67 occurrences/batch) for deterministic pre-announcement by `/api/next-truck` and the button.
 
+## Backfill / resilience
+
+MongoDB change streams are **forward-only**: `.watch()` only delivers events for changes *after* it starts. So a watcher misses documents written before it first ran and documents written during any downtime (on restart, without a persisted resume token, the stream resumes from "now"). This matters for the **heterogeneous-writer** case — e.g. a Python tool writes documents and a separate Node app runs the watcher and serves search: pre-existing and downtime-gap documents would never be derived and would be invisible to search.
+
+`startSearchSync` gains an **opt-in `backfill` flag** (`StartSearchSyncOptions { idleMs?; backfill? }`). When `true`, on start it:
+1. opens the change stream **first** (so concurrent writes during the sweep are not missed),
+2. then sweeps documents missing the derived namespace (`{ [ns]: { $exists: false } }`), computing and writing their derived fields in a cursor loop,
+3. relies on the existing loop-guard to dedup the overlap (sweep writes that the stream also reports compare-equal and are skipped).
+
+The sweep emits its own `indexing-started`/`indexing-finished` (with the backfilled count) for logging, but **not** per-doc `indexed` events (no live subscriptions exist at startup; a subscription created later picks up backfilled docs via its initial snapshot). The flag also makes restarts self-healing. Staleness detection is **existence-only** (missing `_qt` namespace); detecting docs whose source fields changed since derivation (e.g. after a config change) is a later refinement, out of scope here. The demo does not set `backfill` (its seed derives inline); it is documented for the external-writer use case.
+
 ## Error handling
 
 - Live filter with no text pattern → `idle` event (no stream), client shows the prompt; client never opens `EventSource` in that state anyway.
@@ -91,7 +102,7 @@ In `packages/demo/src/shared/generator.ts`:
 
 ## Testing
 
-- **Library unit/integration:** `createLiveSearch` against a live Mongo using the existing parity harness (snapshot returns current matches; a post-insert+derive emits a `match`; cap emits `capped`). `formatSse` is pure → straightforward unit tests. Watcher emitter emits `indexed` after the derive write.
+- **Library unit/integration:** `createLiveSearch` against a live Mongo using the existing parity harness (snapshot returns current matches; a post-insert+derive emits a `match`; cap emits `capped`). `formatSse` is pure → straightforward unit tests. Watcher emitter emits `indexed` after the derive write. **Backfill:** with `backfill: true`, a doc inserted *before* `startSearchSync` starts gets its `_qt.*` fields derived (assert the derived namespace appears).
 - **Demo end-to-end (manual, against the running stack):**
   1. `make mongo-up && make seed`, `make run-backend`, `make run-frontend`.
   2. Query tab: search `zola`, sort by year — server-sorted, paginated. Truckload → unchanged until **Refresh** → new books appear.
