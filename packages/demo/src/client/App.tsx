@@ -13,8 +13,8 @@ const YEAR_MIN = -800
 const YEAR_MAX = 2024
 
 function Results({
-  mode, years, authorCS, titleCS,
-}: { mode: 'AND' | 'OR'; years: [number, number]; authorCS: boolean; titleCS: boolean }) {
+  mode, years, authorCS, titleCS, refreshKey,
+}: { mode: 'AND' | 'OR'; years: [number, number]; authorCS: boolean; titleCS: boolean; refreshKey: number }) {
   const { patterns: authorP } = useSearchContext('author')
   const { patterns: titleP } = useSearchContext('title')
   const [page, setPage] = useState(1)
@@ -39,7 +39,7 @@ function Results({
     let live = true
     searchBooks(predicate, page, pageSize).then(r => { if (live) setData({ items: r.items, total: r.total }) })
     return () => { live = false }
-  }, [predicate, page])
+  }, [predicate, page, refreshKey])
 
   const columns: TableColumnsType<Book> = [
     { title: 'Author', dataIndex: 'author',
@@ -67,10 +67,20 @@ export function App() {
   const [authorCS, setAuthorCS] = useState(false)
   const [titleCS, setTitleCS] = useState(false)
   const [truckMsg, setTruckMsg] = useState('')
+  const [refreshKey, setRefreshKey] = useState(0)
 
   const onTruck = async () => {
+    setTruckMsg('Delivering…')
     const r = await truckload()
-    setTruckMsg(`Delivered ${r.inserted}; ${r.total} total (${10000 - r.total} left). Becoming searchable…`)
+    const left = 10000 - r.total
+    setTruckMsg(`Delivered ${r.inserted} (${left} left). Indexing in the background…`)
+    // The change-stream watcher derives search fields asynchronously; refresh the
+    // results a few times to reflect the newly-searchable books as they land.
+    ;[1500, 3500, 6000].forEach(ms => setTimeout(() => setRefreshKey(k => k + 1), ms))
+    setTimeout(
+      () => setTruckMsg(`${r.total} books loaded${left ? `, ${left} left` : ''} — now searchable.`),
+      6200,
+    )
   }
 
   return (
@@ -101,7 +111,7 @@ export function App() {
             <Button type="primary" onClick={onTruck}>Receive a truckload of new books (1000)</Button>
             <span style={{ color: '#888' }}>{truckMsg}</span>
           </Space>
-          <Results mode={mode} years={years} authorCS={authorCS} titleCS={titleCS} />
+          <Results mode={mode} years={years} authorCS={authorCS} titleCS={titleCS} refreshKey={refreshKey} />
         </div>
       </WithSearch>
     </WithSearch>
