@@ -28,20 +28,43 @@ const AUTHORS = [
 // index 1000*k + 500, exclusive to that batch. The TITLE is unique (never used
 // by generated/classic books), so searching it returns exactly that one book —
 // the unambiguous proof the watcher indexed the batch.
+// Authors AND titles here are absent from both the seeded `classics` and the
+// generated `AUTHORS` pool (asserted below), so searching a sentinel's author OR
+// title returns nothing until its batch is delivered — the watcher proof.
 export const SENTINELS: { author: string; title: string }[] = [
   { author: 'Miguel Ángel Asturias', title: 'El Señor Presidente' },
-  { author: 'Halldór Laxness', title: 'Sjálfstætt Fólk' },
-  { author: 'Émile Zola', title: 'Germinal' },
-  { author: 'Søren Kierkegaard', title: 'Enten – Eller' },
-  { author: 'José Saramago', title: 'Ensaio sobre a Cegueira' },
-  { author: 'Karel Čapek', title: 'Válka s Mloky' },
-  { author: 'Naguib Mahfouz', title: 'Zuqaq al-Midaqq' },
-  { author: 'Knut Hamsun', title: 'Sult' },
-  { author: 'Yukio Mishima', title: 'Kinkaku-ji' },
+  { author: 'Wisława Szymborska', title: 'Sól' },
+  { author: 'Tomas Tranströmer', title: 'Östersjöar' },
+  { author: 'László Krasznahorkai', title: 'Sátántangó' },
+  { author: 'Herta Müller', title: 'Atemschaukel' },
+  { author: 'Kenzaburō Ōe', title: 'Manʼen Gannen no Futtobōru' },
+  { author: 'Cees Nooteboom', title: 'Rituelen' },
+  { author: 'Péter Esterházy', title: 'Harmonia Cælestis' },
+  { author: 'Olga Tokarczuk', title: 'Księgi Jakubowe' },
 ]
 export function batchSentinel(batch: number): { author: string; title: string } {
   return SENTINELS[Math.min(Math.max(batch, 1), SENTINELS.length) - 1]
 }
+
+// Fail loudly if the data invariants the demo relies on ever break:
+//  - classics must fit inside the seed (else they leak into truck batches),
+//  - no sentinel may collide with a classic or with the generated author pool.
+;(() => {
+  if (classics.length > SEED_COUNT) {
+    throw new Error(`generator: classics (${classics.length}) exceed SEED_COUNT (${SEED_COUNT}); they would leak into truck batches`)
+  }
+  const cAuthors = new Set(classics.map((b) => b.author))
+  const cTitles = new Set(classics.map((b) => b.title))
+  const pool = new Set(AUTHORS)
+  for (const s of SENTINELS) {
+    if (cAuthors.has(s.author) || cTitles.has(s.title)) {
+      throw new Error(`generator: sentinel "${s.author} / ${s.title}" collides with a seeded classic`)
+    }
+    if (pool.has(s.author)) {
+      throw new Error(`generator: sentinel author "${s.author}" also appears in the generated pool`)
+    }
+  }
+})()
 // A pool author guaranteed to recur frequently within any batch (~67/1000).
 export function batchCommonAuthor(_batch: number): string {
   return 'Jorge Luis Borges'
