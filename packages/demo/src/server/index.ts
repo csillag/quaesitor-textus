@@ -12,11 +12,17 @@ const PORT = Number(process.env.PORT ?? 3001)
 async function main() {
   const client = await MongoClient.connect(URL)
   const col = client.db('demo').collection('books')
-  await createSearchIndexes(col, demoConfig)
-  startSearchSync(col, demoConfig)
 
-  // warn-level only: keep errors/warnings, drop the per-request access-log dumps
-  const app = Fastify({ logger: { level: 'warn' } })
+  // info-level app logs, but no per-request access-log dumps
+  const app = Fastify({ logger: { level: 'info' }, disableRequestLogging: true })
+
+  await createSearchIndexes(col, demoConfig)
+  startSearchSync(col, demoConfig, {
+    onEvent: (e) => {
+      if (e.type === 'indexing-started') app.log.info('search-sync: indexing started')
+      else app.log.info(`search-sync: indexing finished — ${e.count} document(s) in ${e.durationMs}ms`)
+    },
+  })
 
   app.get('/api/books', async (req) => {
     const q = req.query as Record<string, string>
