@@ -19,6 +19,24 @@
       "development": "./src/adapters/fastify.ts",
       "require": "./dist/adapters/fastify.cjs",
       "import": "./dist/adapters/fastify.js"
+    },
+    "./express": {
+      "types": "./dist/adapters/express.d.ts",
+      "development": "./src/adapters/express.ts",
+      "require": "./dist/adapters/express.cjs",
+      "import": "./dist/adapters/express.js"
+    },
+    "./next/app": {
+      "types": "./dist/adapters/next-app.d.ts",
+      "development": "./src/adapters/next-app.ts",
+      "require": "./dist/adapters/next-app.cjs",
+      "import": "./dist/adapters/next-app.js"
+    },
+    "./next/pages": {
+      "types": "./dist/adapters/next-pages.d.ts",
+      "development": "./src/adapters/next-pages.ts",
+      "require": "./dist/adapters/next-pages.cjs",
+      "import": "./dist/adapters/next-pages.js"
     }
   },
   "scripts": {

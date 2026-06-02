@@ -293,7 +293,7 @@ trade-offs above).
 The watcher's per-document `indexed` event is the foundation for a **live, push-based
 search**: clients see the current matching set, then watch new matches arrive as
 documents are indexed. This package ships a small, layered, transport-agnostic engine
-plus an optional Fastify adapter.
+plus thin adapters for Fastify, Express, and Next.js (App + Pages Router).
 
 ### The engine: `createLiveSearch`
 
@@ -337,7 +337,7 @@ formatSse({ type: 'match', item }) // => `data: {"type":"match","item":{...}}\n\
 sseComment()                       // => `: ping\n\n`  (a heartbeat comment)
 ```
 
-### The Fastify adapter: `@quaesitor-textus/mongo/fastify`
+### Fastify — `@quaesitor-textus/mongo/fastify`
 
 `streamLiveSearch` is the transport glue for Fastify: it sets the SSE headers, hijacks
 the reply socket, runs a heartbeat (`heartbeatMs`, default `25000`), wires
@@ -362,13 +362,52 @@ app.get('/api/live', (request, reply) => {
 })
 ```
 
-### Other frameworks
+### Express — `@quaesitor-textus/mongo/express`
 
-There is no Express (or other) adapter — there is no need for one. `createLiveSearch`
-and `formatSse`/`sseComment` are the reusable pieces; wiring them to any framework that
-exposes a raw response stream is a handful of lines (write the SSE headers, push each
-`sendEvent` payload through `formatSse`, run a heartbeat with `sseComment`, and call
-`live.stop()` on disconnect) — exactly what the Fastify adapter does.
+```ts
+import { streamLiveSearch } from '@quaesitor-textus/mongo/express'
+
+app.get('/api/live', (req, res) => {
+  const filter = buildTextSearchFilter('author', patterns, config)
+  streamLiveSearch(req, res, { sync, collection, config, filter })
+})
+```
+
+### Next.js Pages Router — `@quaesitor-textus/mongo/next/pages`
+
+```ts
+import { streamLiveSearch } from '@quaesitor-textus/mongo/next/pages'
+
+export default function handler(req, res) {
+  streamLiveSearch(req, res, { sync, collection, config, filter })
+}
+export const config = { api: { responseLimit: false } } // allow long-lived SSE
+```
+
+### Next.js App Router — `@quaesitor-textus/mongo/next/app`
+
+```ts
+import { liveSearchResponse } from '@quaesitor-textus/mongo/next/app'
+
+export async function GET(request: Request) {
+  // parse the filter from request.url, build the Mongo filter, then:
+  return liveSearchResponse({ sync, collection, config, filter })
+}
+```
+
+**Dependency-free by design.** The Express and Next Pages adapters are typed against
+Node's `http` `IncomingMessage`/`ServerResponse` (those frameworks' request/response
+objects are subtypes), and the Next App adapter uses only the Web `Response`/`ReadableStream`
+APIs. So **none of them import — or require you to install — `express` or `next`**; you
+only need the framework you already use. Only the Fastify adapter imports its framework
+(for `reply.hijack()`), as an optional peer dependency.
+
+### Any other framework
+
+`createLiveSearch` + `formatSse`/`sseComment` are the reusable core. Wiring them to any
+runtime that exposes a writable response is a handful of lines (write the SSE headers,
+push each `sendEvent` payload through `formatSse`, run a heartbeat with `sseComment`, call
+`live.stop()` on disconnect) — exactly what the shared `runLiveSearch` helper does.
 
 ## Runnable companion
 

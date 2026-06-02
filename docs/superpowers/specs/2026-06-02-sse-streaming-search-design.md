@@ -20,7 +20,9 @@ The current spec/codebase has **no sorting**; this adds it to both examples.
 
 **Goals:** reusable transport-agnostic live-search engine in the library; a Fastify SSE adapter (subpath export, optional peer dep); a second "streaming" demo example contrasting with the query example; sorting on both examples; pre-announced batch contents so the user can arm a search before a truckload.
 
-**Non-goals (v1):** Express/Next adapters (deferred — the lower layers are reusable directly so they are trivial to add later); relevance sorting; server-side pagination of the live view; WebSocket transport.
+**Adapters shipped:** Fastify, Express, Next.js (App Router + Pages Router), plus the transport-agnostic core (`createLiveSearch` + `formatSse`) for anything else. The Node-response adapters (Express, Next Pages) share one helper typed against Node's `http` types (their request/response objects are subtypes), so they carry no framework dependency; the Next App Router adapter uses only Web `Response`/`ReadableStream`. Only Fastify needs a framework import (for `reply.hijack()`), as an optional peer dep.
+
+**Non-goals (v1):** relevance sorting; server-side pagination of the live view; WebSocket transport.
 
 ## Architecture
 
