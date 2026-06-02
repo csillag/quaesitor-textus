@@ -1,0 +1,35 @@
+{
+  "name": "@quaesitor-textus/mongo",
+  "version": "0.1.6",
+  "type": "module",
+  "license": "Apache-2.0",
+  "files": ["dist", "src"],
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "development": "./src/index.ts",
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run"
+  },
+  "publishConfig": { "access": "public" },
+  "dependencies": {
+    "@quaesitor-textus/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "mongodb": ">=5"
+  },
+  "devDependencies": {
+    "mongodb": "^6.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^2.0.0"
+  }
+}

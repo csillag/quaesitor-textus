@@ -1,0 +1,7 @@
+export type { MongoSearchConfig, MongoSearchTarget } from './config'
+export { DEFAULT_NAMESPACE, DEFAULT_NGRAM_SIZES } from './config'
+export { modeKey, targetModes, escapeRegex } from './modes'
+export { computeSearchFields } from './computeSearchFields'
+export { searchIndexSpecs, createSearchIndexes } from './searchIndexes'
+export { buildTextSearchFilter } from './buildTextSearchFilter'
+export { startSearchSync } from './startSearchSync'

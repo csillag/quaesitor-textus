@@ -6,8 +6,10 @@ export { matchItem } from './logic/matchItem'
 export { getHighlightPositions } from './logic/getHighlightPositions'
 export { trimAroundMatch } from './logic/trimAroundMatch'
 export type { TrimOptions } from './logic/trimAroundMatch'
+export { toNgrams } from './logic/toNgrams'
 export { getByPath } from './utils/getByPath'
 export { harvestStrings } from './utils/harvestStrings'
+export { buildCorpus } from './utils/buildCorpus'
 
 // React hooks
 export { useSearch } from './hooks/useSearch'
