@@ -24,13 +24,22 @@ const AUTHORS = [
   'Fyodor Dostoyevskij', 'José Saramago', 'Stanisław Lem', 'Wei Ng',
   'Naguib Mahfouz', 'Halldór Laxness', 'Knut Hamsun', 'Yukio Mishima',
 ]
-// One distinctive diacritic author per truck batch (batch k -> SENTINELS[k-1]),
-// injected at index 1000*k + 500, exclusive to that batch.
-export const SENTINELS = [
-  'Miguel Ángel Asturias', 'Halldór Laxness', 'Émile Zola', 'Søren Kierkegaard',
-  'José Saramago', 'Karel Čapek', 'Naguib Mahfouz', 'Knut Hamsun', 'Yukio Mishima',
+// One distinctive book per truck batch (batch k -> SENTINELS[k-1]), injected at
+// index 1000*k + 500, exclusive to that batch. The TITLE is unique (never used
+// by generated/classic books), so searching it returns exactly that one book —
+// the unambiguous proof the watcher indexed the batch.
+export const SENTINELS: { author: string; title: string }[] = [
+  { author: 'Miguel Ángel Asturias', title: 'El Señor Presidente' },
+  { author: 'Halldór Laxness', title: 'Sjálfstætt Fólk' },
+  { author: 'Émile Zola', title: 'Germinal' },
+  { author: 'Søren Kierkegaard', title: 'Enten – Eller' },
+  { author: 'José Saramago', title: 'Ensaio sobre a Cegueira' },
+  { author: 'Karel Čapek', title: 'Válka s Mloky' },
+  { author: 'Naguib Mahfouz', title: 'Zuqaq al-Midaqq' },
+  { author: 'Knut Hamsun', title: 'Sult' },
+  { author: 'Yukio Mishima', title: 'Kinkaku-ji' },
 ]
-export function batchSentinel(batch: number): string {
+export function batchSentinel(batch: number): { author: string; title: string } {
   return SENTINELS[Math.min(Math.max(batch, 1), SENTINELS.length) - 1]
 }
 // A pool author guaranteed to recur frequently within any batch (~67/1000).
@@ -53,8 +62,9 @@ export function generateBooks(count: number = TOTAL_BOOKS): Book[] {
       year = classics[i].year
     } else if (i >= 1000 && i % 1000 === 500) {
       // index 1000*k + 500 -> batch k's unique sentinel
-      author = batchSentinel(Math.floor(i / 1000))
-      title = 'El Señor Presidente'
+      const s = batchSentinel(Math.floor(i / 1000))
+      author = s.author
+      title = s.title
       year = 1946
     } else {
       author = AUTHORS[Math.floor(rand() * AUTHORS.length)]

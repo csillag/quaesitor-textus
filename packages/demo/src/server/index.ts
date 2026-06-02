@@ -63,7 +63,7 @@ async function main() {
     const total = await col.countDocuments({})
     // Surface a few distinct authors from this batch so the UI can hint what to
     // search for (this batch's sentinel first when present — it proves the watcher).
-    const sentinel = batchSentinel(Math.floor(n / TRUCK_SIZE))
+    const sentinel = batchSentinel(Math.floor(n / TRUCK_SIZE)).author
     const distinct = [...new Set(batch.map((b) => b.author))]
     const sampleAuthors = (distinct.includes(sentinel)
       ? [sentinel, ...distinct.filter((a) => a !== sentinel)]
@@ -91,7 +91,8 @@ async function main() {
   app.get('/api/next-truck', async () => {
     const n = await col.countDocuments({})
     const batch = Math.floor(n / TRUCK_SIZE) // n=1000 -> batch 1 (indices 1000..1999)
-    return { batch, commonAuthor: batchCommonAuthor(batch), sentinelAuthor: batchSentinel(batch) }
+    const s = batchSentinel(batch)
+    return { batch, commonAuthor: batchCommonAuthor(batch), sentinelAuthor: s.author, sentinelTitle: s.title }
   })
 
   await app.listen({ port: PORT, host: '0.0.0.0' })

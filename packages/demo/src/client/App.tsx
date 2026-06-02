@@ -23,7 +23,7 @@ function DemoBody() {
   const [hint, setHint] = useState('')
 
   const refreshHint = () => nextTruck().then(t =>
-    setHint(`next truck — common: ${t.commonAuthor} · sentinel: ${t.sentinelAuthor}`)).catch(() => {})
+    setHint(`next truck — common author: ${t.commonAuthor} · sentinel: ${t.sentinelAuthor} — “${t.sentinelTitle}”`)).catch(() => {})
   useEffect(() => { refreshHint() }, [])
 
   const onTruck = async () => {

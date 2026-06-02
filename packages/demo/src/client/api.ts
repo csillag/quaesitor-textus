@@ -19,7 +19,7 @@ export async function truckload(): Promise<{ inserted: number; total: number; sa
   return res.json()
 }
 
-export async function nextTruck(): Promise<{ batch: number; commonAuthor: string; sentinelAuthor: string }> {
+export async function nextTruck(): Promise<{ batch: number; commonAuthor: string; sentinelAuthor: string; sentinelTitle: string }> {
   const res = await fetch('/api/next-truck')
   if (!res.ok) throw new Error(`next-truck failed: ${res.status}`)
   return res.json()
