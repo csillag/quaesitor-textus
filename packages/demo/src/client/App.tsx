@@ -25,9 +25,13 @@ function Results({
     const textNodes: DemoPredicate[] = []
     if (authorP.length) textNodes.push(text('author', authorP, authorCS ? { caseSensitive: true } : undefined))
     if (titleP.length) textNodes.push(text('title', titleP, titleCS ? { caseSensitive: true } : undefined))
-    const textPart = textNodes.length ? (mode === 'AND' ? and(...textNodes) : or(...textNodes)) : null
     const yearPart = yearRange(years[0], years[1])
-    return textPart ? and(textPart, yearPart) : yearPart
+    if (!textNodes.length) return yearPart
+    // AND mode: flatten text nodes into the outer AND (no redundant nesting).
+    // OR mode: the text nodes must stay grouped under one OR.
+    return mode === 'AND'
+      ? and(...textNodes, yearPart)
+      : and(or(...textNodes), yearPart)
   }, [authorP, titleP, mode, years, authorCS, titleCS])
 
   useEffect(() => { setPage(1) }, [predicate])
