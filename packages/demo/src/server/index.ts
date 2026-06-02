@@ -15,7 +15,8 @@ async function main() {
   await createSearchIndexes(col, demoConfig)
   startSearchSync(col, demoConfig)
 
-  const app = Fastify({ logger: true })
+  // warn-level only: keep errors/warnings, drop the per-request access-log dumps
+  const app = Fastify({ logger: { level: 'warn' } })
 
   app.get('/api/books', async (req) => {
     const q = req.query as Record<string, string>
