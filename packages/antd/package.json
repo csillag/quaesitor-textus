@@ -1,8 +1,10 @@
 {
   "name": "@quaesitor-textus/antd",
-  "version": "0.1.6",
+  "version": "0.2.0",
   "type": "module",
+  "description": "Ant Design components for quaesitor-textus text search (SearchInput and friends).",
   "license": "Apache-2.0",
+  "keywords": ["antd", "ant-design", "text-search", "search", "react", "quaesitor-textus"],
   "files": [
     "dist",
     "src"

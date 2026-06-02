@@ -1,8 +1,16 @@
 {
   "name": "@quaesitor-textus/mongo",
-  "version": "0.1.6",
+  "version": "0.2.0",
   "type": "module",
+  "description": "Server-side MongoDB companion for quaesitor-textus: n-gram-indexed, diacritic/case-insensitive substring search reproducing the client-side matching, a change-stream sync watcher, and live SSE search (Fastify/Express/Next adapters).",
   "license": "Apache-2.0",
+  "keywords": ["mongodb", "full-text-search", "search", "ngram", "diacritics", "sse", "change-streams", "quaesitor-textus"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/csillag/quaesitor-textus.git",
+    "directory": "packages/mongo"
+  },
+  "homepage": "https://github.com/csillag/quaesitor-textus/tree/main/packages/mongo#readme",
   "files": ["dist", "src"],
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
