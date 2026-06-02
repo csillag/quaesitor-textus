@@ -3,29 +3,35 @@ import type { MongoSearchConfig } from './config'
 import { DEFAULT_NAMESPACE } from './config'
 import { computeSearchFields } from './computeSearchFields'
 
-// Emitted around a burst of indexing activity so callers can log progress.
 export type SearchSyncEvent =
   | { type: 'indexing-started' }
   | { type: 'indexing-finished'; count: number; durationMs: number }
-
-export interface StartSearchSyncOptions {
-  // Called when a burst of indexing starts and when it goes idle again.
-  onEvent?: (event: SearchSyncEvent) => void
-  // Quiet period (ms) with no further changes before a burst is considered
-  // finished. Default 750.
-  idleMs?: number
+  | { type: 'indexed'; id: unknown }
+export type SearchSyncListener = (event: SearchSyncEvent) => void
+export interface SearchSync {
+  on(listener: SearchSyncListener): void
+  off(listener: SearchSyncListener): void
+  stop(): Promise<void>
 }
+export interface StartSearchSyncOptions { idleMs?: number; backfill?: boolean }
 
-// Tails the collection change stream and keeps derived search fields in sync.
-// Requires the server to run as a replica set.
+// Tails the collection change stream, derives search fields, and notifies
+// listeners. Requires a replica set. Emits indexing-started / indexing-finished
+// (debounced burst, for logging) and a per-doc `indexed` event AFTER the derive
+// write resolves (so filters on the derived fields will match). With
+// `backfill: true`, derives any pre-existing documents missing the namespace on
+// start (change streams are forward-only, so this catches docs written before
+// the watcher ran or during downtime — e.g. an external Python writer).
 export function startSearchSync(
   collection: Collection,
   config: MongoSearchConfig,
   options: StartSearchSyncOptions = {},
-): { stop: () => Promise<void> } {
+): SearchSync {
   const ns = config.namespace ?? DEFAULT_NAMESPACE
-  const { onEvent, idleMs = 750 } = options
+  const { idleMs = 750, backfill = false } = options
   const stream: ChangeStream = collection.watch([], { fullDocument: 'updateLookup' })
+  const listeners = new Set<SearchSyncListener>()
+  const emit = (e: SearchSyncEvent) => { for (const l of listeners) l(e) }
 
   let active = false
   let count = 0
@@ -37,32 +43,43 @@ export function startSearchSync(
     const doc = change.fullDocument
     if (!doc) return
     const derived = computeSearchFields(doc, config) as Record<string, unknown>
-    // Loop guard: if the stored derived block already equals the freshly computed
-    // one, skip the write — otherwise our own update would retrigger this handler.
-    // (This also keeps our own echo writes from counting as indexing activity.)
+    // Loop guard: our own echo writes already match -> skip (and don't count).
     if (JSON.stringify(doc[ns]) === JSON.stringify(derived[ns])) return
 
-    if (!active) {
-      active = true
-      count = 0
-      startedAt = Date.now()
-      onEvent?.({ type: 'indexing-started' })
-    }
+    if (!active) { active = true; count = 0; startedAt = Date.now(); emit({ type: 'indexing-started' }) }
     count += 1
+    // Emit `indexed` only AFTER the derive write lands, so live match-tests see
+    // the derived fields.
     void collection.updateOne({ _id: doc._id }, { $set: { [ns]: derived[ns] } })
+      .then(() => emit({ type: 'indexed', id: doc._id }))
+      .catch(() => { /* ignore individual write failures */ })
 
-    // Debounce: declare the burst finished once changes stop arriving.
     if (idleTimer) clearTimeout(idleTimer)
     idleTimer = setTimeout(() => {
       active = false
-      onEvent?.({ type: 'indexing-finished', count, durationMs: Date.now() - startedAt })
+      emit({ type: 'indexing-finished', count, durationMs: Date.now() - startedAt })
     }, idleMs)
   })
 
+  // Optional one-time backfill. The stream is already open, so writes arriving
+  // during the sweep are handled normally; the loop-guard dedups the overlap.
+  if (backfill) void runBackfill()
+  async function runBackfill() {
+    const startedAt = Date.now()
+    let n = 0
+    emit({ type: 'indexing-started' })
+    const cursor = collection.find({ [ns]: { $exists: false } })
+    for await (const doc of cursor) {
+      const derived = computeSearchFields(doc, config) as Record<string, unknown>
+      await collection.updateOne({ _id: doc._id }, { $set: { [ns]: derived[ns] } }).catch(() => {})
+      n += 1
+    }
+    emit({ type: 'indexing-finished', count: n, durationMs: Date.now() - startedAt })
+  }
+
   return {
-    stop: async () => {
-      if (idleTimer) clearTimeout(idleTimer)
-      await stream.close()
-    },
+    on: (l) => { listeners.add(l) },
+    off: (l) => { listeners.delete(l) },
+    stop: async () => { if (idleTimer) clearTimeout(idleTimer); listeners.clear(); await stream.close() },
   }
 }

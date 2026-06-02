@@ -1,0 +1,57 @@
+import type { Collection, Document, Filter } from 'mongodb'
+import type { MongoSearchConfig } from './config'
+import type { SearchSync, SearchSyncEvent } from './startSearchSync'
+
+export type LiveEvent =
+  | { type: 'snapshot'; items: Document[] }
+  | { type: 'match'; item: Document }
+  | { type: 'capped' }
+
+export interface CreateLiveSearchOptions {
+  sync: SearchSync
+  collection: Collection
+  config: MongoSearchConfig
+  filter: Filter<Document>
+  sort?: { field: string; dir: 1 | -1 }
+  cap?: number
+  sendEvent: (event: LiveEvent) => void
+}
+
+// Transport-agnostic live search: emits the current matching set (capped), then
+// one `match` per newly-indexed document that matches `filter`, then `capped`.
+export function createLiveSearch(opts: CreateLiveSearchOptions): { stop: () => void } {
+  const { sync, collection, config: _config, filter, sort, cap = 500, sendEvent } = opts
+  const seen = new Set<string>()
+  let count = 0
+  let capped = false
+
+  const idOf = (doc: Document) => String(doc._id)
+
+  // Initial snapshot (sorted for a nicer first paint; client re-sorts anyway).
+  const cursor = collection.find(filter)
+  if (sort) cursor.sort({ [sort.field]: sort.dir })
+  void cursor.limit(cap).toArray().then((items) => {
+    for (const it of items) seen.add(idOf(it))
+    count = items.length
+    sendEvent({ type: 'snapshot', items })
+    if (count >= cap) { capped = true; sendEvent({ type: 'capped' }) }
+  }).catch(() => sendEvent({ type: 'snapshot', items: [] }))
+
+  const listener = (e: SearchSyncEvent) => {
+    if (e.type !== 'indexed' || capped) return
+    void collection.findOne({ $and: [{ _id: e.id as any }, filter] })
+      .then((doc) => {
+        if (!doc || capped) return
+        const id = idOf(doc)
+        if (seen.has(id)) return
+        seen.add(id)
+        count += 1
+        sendEvent({ type: 'match', item: doc })
+        if (count >= cap) { capped = true; sendEvent({ type: 'capped' }) }
+      })
+      .catch(() => { /* skip a failed match-test; keep the stream alive */ })
+  }
+  sync.on(listener)
+
+  return { stop: () => sync.off(listener) }
+}

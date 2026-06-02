@@ -15,20 +15,30 @@ function mulberry32(a: number) {
   }
 }
 
-// Diacritic-rich pool (the sentinel Miguel Ángel Asturias is reserved/injected
-// separately at RESERVED_INDEX, NOT here) plus a 2-char surname ('Wei Ng') to
-// exercise the bigram path.
+// Diacritic-rich pool (the per-batch sentinels in SENTINELS are injected
+// separately, NOT here) plus a 2-char surname ('Wei Ng') to exercise the
+// bigram path.
 const AUTHORS = [
   'Émile Zola', 'Søren Kierkegaard', 'Charlotte Brontë', 'Karel Čapek',
   'Jorge Luis Borges', 'Albert Camus', 'Antoine de Saint-Exupéry',
   'Fyodor Dostoyevskij', 'José Saramago', 'Stanisław Lem', 'Wei Ng',
   'Naguib Mahfouz', 'Halldór Laxness', 'Knut Hamsun', 'Yukio Mishima',
 ]
+// One distinctive diacritic author per truck batch (batch k -> SENTINELS[k-1]),
+// injected at index 1000*k + 500, exclusive to that batch.
+export const SENTINELS = [
+  'Miguel Ángel Asturias', 'Halldór Laxness', 'Émile Zola', 'Søren Kierkegaard',
+  'José Saramago', 'Karel Čapek', 'Naguib Mahfouz', 'Knut Hamsun', 'Yukio Mishima',
+]
+export function batchSentinel(batch: number): string {
+  return SENTINELS[Math.min(Math.max(batch, 1), SENTINELS.length) - 1]
+}
+// A pool author guaranteed to recur frequently within any batch (~67/1000).
+export function batchCommonAuthor(_batch: number): string {
+  return 'Jorge Luis Borges'
+}
 const ADJ = ['Silent', 'Crimson', 'Hidden', 'Eternal', 'Broken', 'Golden', 'Distant', 'Hollow']
 const NOUN = ['Garden', 'River', 'Empire', 'Shadow', 'Mirror', 'Harvest', 'Lantern', 'Citadel']
-const RESERVED_INDEX = 1500 // lands inside the first truckload batch (1000..1999)
-// Sentinel author, exclusive to the first truckload batch; used to verify the watcher.
-export const SENTINEL_AUTHOR = 'Miguel Ángel Asturias'
 
 export function generateBooks(count: number = TOTAL_BOOKS): Book[] {
   const rand = mulberry32(0x9e3779b9)
@@ -41,11 +51,9 @@ export function generateBooks(count: number = TOTAL_BOOKS): Book[] {
       author = classics[i].author
       title = classics[i].title
       year = classics[i].year
-    } else if (i === RESERVED_INDEX) {
-      // Sentinel author exclusive to the first truckload batch (1000..1999) and
-      // absent from the seeded classics — search "asturias" is empty before the
-      // first truckload and hits after, verifying the change-stream watcher.
-      author = SENTINEL_AUTHOR
+    } else if (i >= 1000 && i % 1000 === 500) {
+      // index 1000*k + 500 -> batch k's unique sentinel
+      author = batchSentinel(Math.floor(i / 1000))
       title = 'El Señor Presidente'
       year = 1946
     } else {

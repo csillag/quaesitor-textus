@@ -1,10 +1,12 @@
 import Fastify from 'fastify'
 import { MongoClient } from 'mongodb'
-import { createSearchIndexes, startSearchSync } from '@quaesitor-textus/mongo'
+import { createSearchIndexes, startSearchSync, formatSse } from '@quaesitor-textus/mongo'
+import { streamLiveSearch } from '@quaesitor-textus/mongo/fastify'
 import { demoConfig } from '../shared/config'
 import { predicateToMongo } from '../shared/predicateToMongo'
+import { hasTextPattern } from '../shared/predicate'
 import type { DemoPredicate } from '../shared/predicate'
-import { generateBooks, TOTAL_BOOKS, TRUCK_SIZE, SENTINEL_AUTHOR } from '../shared/generator'
+import { generateBooks, TOTAL_BOOKS, TRUCK_SIZE, batchCommonAuthor, batchSentinel } from '../shared/generator'
 
 const URL = process.env.MONGO_URL ?? 'mongodb://localhost:27018/?directConnection=true'
 const PORT = Number(process.env.PORT ?? 3001)
@@ -26,11 +28,10 @@ async function main() {
   })
 
   await createSearchIndexes(col, demoConfig)
-  startSearchSync(col, demoConfig, {
-    onEvent: (e) => {
-      if (e.type === 'indexing-started') app.log.info('search-sync: indexing started')
-      else app.log.info(`search-sync: indexing finished — ${e.count} document(s) in ${e.durationMs}ms`)
-    },
+  const sync = startSearchSync(col, demoConfig)
+  sync.on((e) => {
+    if (e.type === 'indexing-started') app.log.info('search-sync: indexing started')
+    else if (e.type === 'indexing-finished') app.log.info(`search-sync: indexing finished — ${e.count} document(s) in ${e.durationMs}ms`)
   })
 
   app.get('/api/books', async (req) => {
@@ -40,8 +41,12 @@ async function main() {
     const filter = q.filter
       ? predicateToMongo(JSON.parse(q.filter) as DemoPredicate, demoConfig)
       : {}
+    const sortField = ['year', 'author', 'title'].includes(q.sort) ? q.sort : undefined
+    const sortDir = q.dir === 'desc' ? -1 : 1
+    const cursor = col.find(filter)
+    if (sortField) cursor.sort({ [sortField]: sortDir })
     const [items, total] = await Promise.all([
-      col.find(filter).skip((page - 1) * pageSize).limit(pageSize).toArray(),
+      cursor.skip((page - 1) * pageSize).limit(pageSize).toArray(),
       col.countDocuments(filter),
     ])
     return { items, total, page, pageSize }
@@ -57,13 +62,36 @@ async function main() {
     } catch { /* dup-key no-ops on re-click are expected */ }
     const total = await col.countDocuments({})
     // Surface a few distinct authors from this batch so the UI can hint what to
-    // search for (sentinel first when present — it proves the watcher).
+    // search for (this batch's sentinel first when present — it proves the watcher).
+    const sentinel = batchSentinel(Math.floor(n / TRUCK_SIZE))
     const distinct = [...new Set(batch.map((b) => b.author))]
-    const sampleAuthors = (distinct.includes(SENTINEL_AUTHOR)
-      ? [SENTINEL_AUTHOR, ...distinct.filter((a) => a !== SENTINEL_AUTHOR)]
+    const sampleAuthors = (distinct.includes(sentinel)
+      ? [sentinel, ...distinct.filter((a) => a !== sentinel)]
       : distinct
     ).slice(0, 6)
     return { inserted: total - n, total, sampleAuthors }
+  })
+
+  app.get('/api/live', (request, reply) => {
+    const q = request.query as Record<string, string>
+    const predicate: DemoPredicate | null = q.filter ? (JSON.parse(q.filter) as DemoPredicate) : null
+    if (!predicate || !hasTextPattern(predicate)) {
+      reply.raw.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' })
+      reply.hijack()
+      reply.raw.write(formatSse({ type: 'idle' }))
+      reply.raw.end()
+      return
+    }
+    const filter = predicateToMongo(predicate, demoConfig)
+    const sortField = ['year', 'author', 'title'].includes(q.sort) ? q.sort : undefined
+    const sort = sortField ? { field: sortField, dir: (q.dir === 'desc' ? -1 : 1) as 1 | -1 } : undefined
+    streamLiveSearch(request, reply, { sync, collection: col, config: demoConfig, filter, sort, cap: 500 })
+  })
+
+  app.get('/api/next-truck', async () => {
+    const n = await col.countDocuments({})
+    const batch = Math.floor(n / TRUCK_SIZE) // n=1000 -> batch 1 (indices 1000..1999)
+    return { batch, commonAuthor: batchCommonAuthor(batch), sentinelAuthor: batchSentinel(batch) }
   })
 
   await app.listen({ port: PORT, host: '0.0.0.0' })

@@ -13,6 +13,12 @@
       "development": "./src/index.ts",
       "require": "./dist/index.cjs",
       "import": "./dist/index.js"
+    },
+    "./fastify": {
+      "types": "./dist/adapters/fastify.d.ts",
+      "development": "./src/adapters/fastify.ts",
+      "require": "./dist/adapters/fastify.cjs",
+      "import": "./dist/adapters/fastify.js"
     }
   },
   "scripts": {
@@ -24,9 +30,14 @@
     "@quaesitor-textus/core": "workspace:*"
   },
   "peerDependencies": {
-    "mongodb": ">=5"
+    "mongodb": ">=5",
+    "fastify": "^4 || ^5"
+  },
+  "peerDependenciesMeta": {
+    "fastify": { "optional": true }
   },
   "devDependencies": {
+    "fastify": "^4.0.0",
     "mongodb": "^6.0.0",
     "tsup": "^8.0.0",
     "typescript": "^5.4.0",

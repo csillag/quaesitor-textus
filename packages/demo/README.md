@@ -25,6 +25,60 @@ JavaScript** in the query path.
   fields a moment later — demonstrating that newly inserted documents become
   searchable automatically, without the writer having to compute anything.
 
+## Two examples
+
+The shared search controls (author/title inputs with per-input case-sensitive
+toggles, the AND/OR mode switch, the year-range slider, and the sort
+field/direction selectors) sit above two tabs that consume the **same**
+predicate and sort, but render it two different ways:
+
+- **Query-based UI.** A classic request/response table: each predicate/sort/page
+  change issues a `GET /api/books?…&sort&dir` and renders one server-sorted,
+  server-paginated page. The total match count comes from the server, and a
+  manual **Refresh** button re-runs the current query (handy after a truckload
+  to pull in newly-indexed matches).
+- **Streaming-based UI.** A push-based live list backed by **Server-Sent
+  Events** (`GET /api/live?…&sort&dir`, consumed via `EventSource`). The server
+  first sends a `snapshot` of current matches, then one `match` event per
+  newly-indexed document that matches the filter, so rows **pour in live** as a
+  truckload is indexed — no refresh needed. Sorting is applied client-side over
+  the accumulated list (the connection re-opens only when the predicate
+  changes). The list is capped at **500** results (`capped` event → "showing
+  first 500"). With **no text pattern** the tab does not stream; it shows a
+  prompt plus the total book count for context.
+
+Only the active tab is mounted (`destroyInactiveTabPane`), so switching tabs
+tears down the inactive tab's fetch or `EventSource` connection.
+
+## Walkthrough: watch results pour in
+
+This is the headline behavior to try by hand:
+
+1. Read the hint under the **"Receive a truckload of new books"** button. It
+   pre-announces the **next** truck's **common author** (a pool author that
+   recurs frequently, ~67 books in the batch) and its unique **sentinel author**
+   (one distinctive diacritic author that exists *only* in that batch, e.g.
+   `Miguel Ángel Asturias`).
+2. Arm the search: type the pre-announced common author (or the sentinel) into
+   the **author** box.
+3. Switch to the **Streaming-based UI** tab. With the search armed it opens a
+   live SSE connection and shows the current matches (likely 0 for a sentinel
+   not yet delivered).
+4. Press **"Receive a truckload of new books (1000)"**. The batch is inserted
+   *raw* (no derived search fields); the `startSearchSync` watcher derives them
+   in the background and emits a per-document `indexed` event as each write
+   lands.
+5. Watch the rows **pour into the list live** — many hits for the common author,
+   plus the single sentinel hit — without pressing anything. The backend logs
+   `search-sync: indexing started` / `… finished` as the batch is processed.
+
+Compare with the **Query-based UI** tab, where the same truckload only shows up
+after you press **Refresh** (request/response, not push).
+
+(Because the watcher runs asynchronously, read-your-writes on the text search is
+not guaranteed immediately after the insert — the streaming rows appear as each
+document is indexed.)
+
 ## Prerequisites
 
 - **Docker** (for the single-node replica-set MongoDB) with Docker Compose.
@@ -57,24 +111,6 @@ Then open <http://localhost:5173>.
 > A replica set is required because the watcher tails a MongoDB **change
 > stream**, which is only available on replica sets. The compose file runs a
 > single-node replica set and initializes it idempotently via its healthcheck.
-
-## Verifying the live watcher
-
-This is the headline behavior to try by hand:
-
-1. In the **author** box, type `asturias`. You should see **0 matching books**
-   — the seed set (the first 1000 books) does not contain
-   `Miguel Ángel Asturias` (he lives only in the first truckload batch).
-2. Click **"Receive a truckload of new books (1000)"**. This inserts the next
-   batch of books *raw*, with no derived search fields.
-3. Wait a moment. The change-stream watcher computes the search fields for the
-   freshly inserted documents in the background.
-4. Re-trigger the `asturias` search (e.g. retype it). Now **Miguel Ángel
-   Asturias** appears in the results — proving the watcher made the new
-   documents searchable without the insert path computing anything itself.
-
-(Because the watcher runs asynchronously, read-your-writes on the text search
-is not guaranteed immediately after the insert — hence the brief wait.)
 
 ## All Make targets
 

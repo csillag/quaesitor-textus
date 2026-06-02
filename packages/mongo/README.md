@@ -142,6 +142,35 @@ recomputes `computeSearchFields`, and writes the derived block back. It includes
 loop guard: if the stored derived block already equals the freshly computed one, it
 skips the write so its own update does not retrigger the handler.
 
+`startSearchSync` returns a `SearchSync` **emitter**: register a listener with
+`sync.on(listener)` (remove it with `sync.off(listener)`) to receive a stream of
+events — `indexing-started`, `indexing-finished` (a debounced burst summary, handy
+for logging), and a per-document `indexed` event fired **after** each derive write
+resolves (so a filter on the derived fields will match). Switch on `event.type`:
+
+```ts
+const sync = startSearchSync(collection, config)
+sync.on((e) => {
+  if (e.type === 'indexing-started') console.log('indexing started')
+  else if (e.type === 'indexing-finished') console.log(`indexed ${e.count} doc(s) in ${e.durationMs}ms`)
+})
+```
+
+**Backfill for external writers / restart resilience.** Change streams are
+forward-only: they only see writes that happen *after* the watcher opens the stream,
+so documents written before the watcher ran (or during downtime) never get a derived
+block. Pass `{ backfill: true }` to sweep, on start, any pre-existing documents that
+are missing the namespace (`{ [namespace]: { $exists: false } }`) and derive them:
+
+```ts
+const sync = startSearchSync(collection, config, { backfill: true })
+```
+
+This is the heterogeneous-writer pattern: one process (e.g. a Python tool) writes raw
+documents, while a separate Node app runs the watcher with `backfill: true` and serves
+search. On boot the Node app catches up on everything written while it was down, then
+keeps current via the change stream. Backfill also requires a replica set.
+
 **Trade-offs of the watcher:**
 
 - It **requires a replica set** (change streams are a replica-set feature).
@@ -256,6 +285,88 @@ The watcher sidesteps this: it always recomputes from the post-write `fullDocume
 so it is correct regardless of how the write was shaped. Its only requirements are a
 replica set and tolerance for the brief async-staleness window (see the watcher
 trade-offs above).
+
+## Live search (SSE)
+
+The watcher's per-document `indexed` event is the foundation for a **live, push-based
+search**: clients see the current matching set, then watch new matches arrive as
+documents are indexed. This package ships a small, layered, transport-agnostic engine
+plus an optional Fastify adapter.
+
+### The engine: `createLiveSearch`
+
+`createLiveSearch` is framework-agnostic — it knows nothing about HTTP. Give it a
+`SearchSync` (from `startSearchSync`), the collection/config, a Mongo `filter`, and a
+`sendEvent` callback; it emits:
+
+- `snapshot` — the current matching set (capped), sent once on start;
+- `match` — one per newly-`indexed` document that matches `filter`;
+- `capped` — sent once the emitted count reaches `cap` (default `500`), after which
+  no further matches are pushed.
+
+```ts
+import { createLiveSearch } from '@quaesitor-textus/mongo'
+
+const live = createLiveSearch({
+  sync,                       // a SearchSync from startSearchSync
+  collection,
+  config,
+  filter,                     // a Filter<Document>, e.g. from buildTextSearchFilter
+  sort: { field: 'year', dir: 1 },   // optional; sorts the initial snapshot
+  cap: 500,                   // optional; default 500
+  sendEvent: (event) => { /* serialize + push to the client */ },
+})
+// ... when the client disconnects:
+live.stop()
+```
+
+Internally it sends the snapshot (a sorted, capped `find`), then for each `indexed`
+event runs a `findOne` match-test (`_id` AND `filter`) and emits a `match` only for
+newly-matching, not-yet-seen documents.
+
+### The wire helpers: `formatSse` / `sseComment`
+
+These format the SSE wire bytes, independent of any framework:
+
+```ts
+import { formatSse, sseComment } from '@quaesitor-textus/mongo'
+
+formatSse({ type: 'match', item }) // => `data: {"type":"match","item":{...}}\n\n`
+sseComment()                       // => `: ping\n\n`  (a heartbeat comment)
+```
+
+### The Fastify adapter: `@quaesitor-textus/mongo/fastify`
+
+`streamLiveSearch` is the transport glue for Fastify: it sets the SSE headers, hijacks
+the reply socket, runs a heartbeat (`heartbeatMs`, default `25000`), wires
+`createLiveSearch` to `reply.raw.write(formatSse(...))`, and tears everything down when
+the request closes. It lives behind a subpath export; **fastify is an optional peer
+dependency**, so you only pull it in if you use this adapter.
+
+```ts
+import { streamLiveSearch } from '@quaesitor-textus/mongo/fastify'
+
+app.get('/api/live', (request, reply) => {
+  const filter = buildTextSearchFilter('author', patterns, config)
+  streamLiveSearch(request, reply, {
+    sync,                  // a SearchSync shared across requests
+    collection,
+    config,
+    filter,
+    sort: { field: 'year', dir: 1 },  // optional
+    cap: 500,                          // optional
+    heartbeatMs: 25000,                // optional
+  })
+})
+```
+
+### Other frameworks
+
+There is no Express (or other) adapter — there is no need for one. `createLiveSearch`
+and `formatSse`/`sseComment` are the reusable pieces; wiring them to any framework that
+exposes a raw response stream is a handful of lines (write the SSE headers, push each
+`sendEvent` payload through `formatSse`, run a heartbeat with `sseComment`, and call
+`live.stop()` on disconnect) — exactly what the Fastify adapter does.
 
 ## Runnable companion
 
