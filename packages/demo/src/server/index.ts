@@ -6,7 +6,7 @@ import { predicateToMongo } from '../shared/predicateToMongo'
 import type { DemoPredicate } from '../shared/predicate'
 import { generateBooks, TOTAL_BOOKS, TRUCK_SIZE } from '../shared/generator'
 
-const URL = process.env.MONGO_URL ?? 'mongodb://localhost:27018/?replicaSet=rs0'
+const URL = process.env.MONGO_URL ?? 'mongodb://localhost:27018/?directConnection=true'
 const PORT = Number(process.env.PORT ?? 3001)
 
 async function main() {

@@ -15,8 +15,9 @@ function mulberry32(a: number) {
   }
 }
 
-// Diacritic-rich pool (García Márquez is reserved/injected separately, NOT here)
-// plus a 2-char surname ('Wei Ng') to exercise the bigram path.
+// Diacritic-rich pool (the sentinel Miguel Ángel Asturias is reserved/injected
+// separately at RESERVED_INDEX, NOT here) plus a 2-char surname ('Wei Ng') to
+// exercise the bigram path.
 const AUTHORS = [
   'Émile Zola', 'Søren Kierkegaard', 'Charlotte Brontë', 'Karel Čapek',
   'Jorge Luis Borges', 'Albert Camus', 'Antoine de Saint-Exupéry',
@@ -39,9 +40,12 @@ export function generateBooks(count: number = TOTAL_BOOKS): Book[] {
       title = classics[i].title
       year = classics[i].year
     } else if (i === RESERVED_INDEX) {
-      author = 'Gabriel García Márquez'
-      title = 'One Hundred Years of Solitude'
-      year = 1967
+      // Sentinel author exclusive to the first truckload batch (1000..1999) and
+      // absent from the seeded classics — search "asturias" is empty before the
+      // first truckload and hits after, verifying the change-stream watcher.
+      author = 'Miguel Ángel Asturias'
+      title = 'El Señor Presidente'
+      year = 1946
     } else {
       author = AUTHORS[Math.floor(rand() * AUTHORS.length)]
       title = `The ${ADJ[Math.floor(rand() * ADJ.length)]} ${NOUN[Math.floor(rand() * NOUN.length)]}`

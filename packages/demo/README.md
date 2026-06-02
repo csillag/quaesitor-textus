@@ -62,16 +62,16 @@ Then open <http://localhost:5173>.
 
 This is the headline behavior to try by hand:
 
-1. In the **author** box, type `garcia`. You should see **0 matching books**
+1. In the **author** box, type `asturias`. You should see **0 matching books**
    — the seed set (the first 1000 books) does not contain
-   `Gabriel García Márquez`.
+   `Miguel Ángel Asturias` (he lives only in the first truckload batch).
 2. Click **"Receive a truckload of new books (1000)"**. This inserts the next
    batch of books *raw*, with no derived search fields.
 3. Wait a moment. The change-stream watcher computes the search fields for the
    freshly inserted documents in the background.
-4. Re-trigger the `garcia` search (e.g. retype it). Now **García Márquez**
-   appears in the results — proving the watcher made the new documents
-   searchable without the insert path computing anything itself.
+4. Re-trigger the `asturias` search (e.g. retype it). Now **Miguel Ángel
+   Asturias** appears in the results — proving the watcher made the new
+   documents searchable without the insert path computing anything itself.
 
 (Because the watcher runs asynchronously, read-your-writes on the text search
 is not guaranteed immediately after the insert — hence the brief wait.)

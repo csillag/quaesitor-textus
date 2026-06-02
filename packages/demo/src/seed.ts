@@ -3,7 +3,7 @@ import { computeSearchFields, createSearchIndexes } from '@quaesitor-textus/mong
 import { demoConfig } from './shared/config'
 import { generateBooks, SEED_COUNT } from './shared/generator'
 
-const URL = process.env.MONGO_URL ?? 'mongodb://localhost:27018/?replicaSet=rs0'
+const URL = process.env.MONGO_URL ?? 'mongodb://localhost:27018/?directConnection=true'
 
 async function main() {
   const client = await MongoClient.connect(URL)
