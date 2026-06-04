@@ -1,10 +1,17 @@
 {
   "name": "@quaesitor-textus/core",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "description": "Client-side text search and highlighting for React — diacritic/case-insensitive substring matching, tokenization, n-grams, hooks, and components.",
   "license": "Apache-2.0",
-  "keywords": ["text-search", "search", "highlight", "diacritics", "react", "quaesitor-textus"],
+  "keywords": [
+    "text-search",
+    "search",
+    "highlight",
+    "diacritics",
+    "react",
+    "quaesitor-textus"
+  ],
   "files": [
     "dist",
     "src"
