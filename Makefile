@@ -1,4 +1,4 @@
-.PHONY: help install core-storybook antd-storybook build dev-tools publish publish-core publish-antd publish-patch-version publish-minor-version publish-major-version
+.PHONY: help install core-storybook antd-storybook build dev-tools publish publish-core publish-antd publish-mongo publish-patch-version publish-minor-version publish-major-version
 
 VENV := .venv
 PIP  := $(VENV)/bin/pip
@@ -12,6 +12,7 @@ help:
 	@echo "  publish          Build and publish both packages to npmjs"
 	@echo "  publish-core          Build and publish @quaesitor-textus/core to npmjs"
 	@echo "  publish-antd          Build and publish @quaesitor-textus/antd to npmjs"
+	@echo "  publish-mongo         Build and publish @quaesitor-textus/mongo to npmjs"
 	@echo "  publish-patch-version Bump patch version of both packages and publish"
 	@echo "  publish-minor-version Bump minor version of both packages and publish"
 	@echo "  publish-major-version Bump major version of both packages and publish"
@@ -41,7 +42,11 @@ publish-antd: publish-core
 	pnpm --filter @quaesitor-textus/antd build
 	pnpm --filter @quaesitor-textus/antd publish --no-git-checks
 
-publish: publish-core publish-antd
+publish-mongo:
+	pnpm --filter @quaesitor-textus/mongo build
+	pnpm --filter @quaesitor-textus/mongo publish --no-git-checks
+
+publish: publish-core publish-antd publish-mongo
 
 publish-patch-version:
 	cd packages/core && npm version patch --no-git-tag-version
