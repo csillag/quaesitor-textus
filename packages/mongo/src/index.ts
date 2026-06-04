@@ -9,4 +9,7 @@ export { startSearchSync } from './startSearchSync'
 export { createLiveSearch } from './createLiveSearch'
 export type { LiveEvent, CreateLiveSearchOptions } from './createLiveSearch'
 export { formatSse, sseComment } from './sse'
-export type { SearchSync, SearchSyncEvent, SearchSyncListener, StartSearchSyncOptions } from './startSearchSync'
+export type {
+  SearchSync, SearchSyncEvent, SearchSyncListener, StartSearchSyncOptions,
+  ConfigSource, MongoSearchConfigProvider,
+} from './startSearchSync'

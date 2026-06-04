@@ -182,6 +182,23 @@ keeps current via the change stream. Backfill also requires a replica set.
   the document searchable immediately, use approach (a) for that write (or do both —
   inline compute on the critical path, watcher as a backstop).
 
+### Dynamic config: a provider function
+
+`startSearchSync` also accepts a **provider function** in place of a fixed
+config, for collections whose searchable fields are not known up front or change
+over time:
+
+```ts
+startSearchSync(collection, () => deriveConfigFromData(collection), { backfill: true })
+```
+
+The provider is resolved once at start and re-invoked on each idle flush. When it
+returns a config whose `searchFieldsVersion` differs (e.g. a newly discovered
+field), the watcher ensures the new indexes and re-derives existing documents.
+Sampling and any throttling belong in the provider — the watcher calls it once per
+idle burst and re-backfills only on a version change. Passing a plain config object
+is unchanged: it is resolved once and you call `createSearchIndexes` yourself.
+
 ### 3. Translate a text-search node into a Mongo filter
 
 ```ts
