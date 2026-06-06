@@ -20,7 +20,7 @@ export { useFilterFunction } from './hooks/useFilterFunction'
 export { WithSearch } from './context/WithSearch'
 export { useSearchContext } from './context/useSearchContext'
 export type { SearchEntry, SearchContextValue } from './context/SearchContext'
-export type { WithSearchProps } from './context/WithSearch'
+export type { WithSearchProps, SearchSpec } from './context/WithSearch'
 
 // Components
 export { SearchInput } from './components/SearchInput'
