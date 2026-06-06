@@ -55,10 +55,27 @@ describe('getHighlightPositions', () => {
     ])
   })
 
-  it('end position uses raw (un-normalized) pattern length', () => {
-    // 'héllo' raw length is 5; normalized to 'hello' which is 5 chars; start=0, end=5
+  it('matches a diacritic-insensitive pattern against plain text', () => {
+    // 'héllo' normalizes to 'hello' and matches 'hello' (both 5 chars); start=0, end=5
     expect(getHighlightPositions('hello world', ['héllo'])).toEqual([
       { start: 0, end: 5 },
+    ])
+  })
+
+  it('maps spans back to original indices when an expanding fold precedes the match', () => {
+    // 'Straße Gasse': ß→ss makes normalized text one char longer, so the match
+    // for 'gasse' sits at normalized index 8 but original index 7. Spans index
+    // the ORIGINAL text, so we expect { start: 7, end: 12 } — 'Gasse'.
+    expect(getHighlightPositions('Straße Gasse', ['gasse'])).toEqual([
+      { start: 7, end: 12 },
+    ])
+  })
+
+  it('ends the span at the original match length, not the raw pattern length', () => {
+    // User types the expanded form 'strasse' (7 chars) to find original 'Straße'
+    // (6 chars). The span must cover the 6 original chars, not 7.
+    expect(getHighlightPositions('Straße', ['strasse'])).toEqual([
+      { start: 0, end: 6 },
     ])
   })
 
