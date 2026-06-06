@@ -7,6 +7,7 @@ import { HighlightedText } from './HighlightedText'
 interface HighlightedTrimmedTextProps {
   text: string | undefined
   fragmentLength?: number
+  patterns?: string[]
   searchNames?: string | string[]
   all?: boolean
   options?: SearchOptions
@@ -16,17 +17,19 @@ interface HighlightedTrimmedTextProps {
 export function HighlightedTrimmedText({
   text,
   fragmentLength = 80,
+  patterns: propPatterns,
   searchNames,
   all,
   options,
   markStyle,
 }: HighlightedTrimmedTextProps): React.ReactNode {
-  const patterns = useResolvedPatterns(searchNames, all)
+  const patterns = useResolvedPatterns(searchNames, all, propPatterns)
   if (text === undefined) return undefined
   const trimmed = trimAroundMatch(text, patterns, { fragmentLength, ...options })
   return (
     <HighlightedText
       text={trimmed}
+      patterns={propPatterns}
       searchNames={searchNames}
       all={all}
       options={options}

@@ -42,6 +42,25 @@ describe('HighlightedTrimmedText', () => {
     expect(textWithoutEllipsis.length).toBeLessThanOrEqual(40)
   })
 
+  it('accepts patterns directly, like HighlightedText', () => {
+    const { container } = render(
+      <HighlightedTrimmedText text="The quick brown fox" patterns={['brown']} />
+    )
+    expect(container.querySelector('mark')?.textContent).toBe('brown')
+  })
+
+  it('trims around a directly-supplied pattern when text exceeds fragmentLength', () => {
+    const longText =
+      'The quick brown fox jumps over the lazy dog and keeps on running through the forest'
+    const { container } = render(
+      <HighlightedTrimmedText text={longText} patterns={['lazy']} fragmentLength={40} />
+    )
+    expect(container.textContent).toContain('…')
+    expect(container.querySelector('mark')?.textContent).toBe('lazy')
+    const withoutEllipsis = container.textContent!.replace(/…/g, '')
+    expect(withoutEllipsis.length).toBeLessThanOrEqual(40)
+  })
+
   it('reads patterns via searchNames prop', () => {
     const { container } = render(
       <WithSearch name="main" query="brown" onSetQuery={() => {}}>
