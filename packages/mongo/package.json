@@ -1,6 +1,6 @@
 {
   "name": "@quaesitor-textus/mongo",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "type": "module",
   "description": "Server-side MongoDB companion for quaesitor-textus: n-gram-indexed, diacritic/case-insensitive substring search reproducing the client-side matching, a change-stream sync watcher, and live SSE search (Fastify/Express/Next adapters).",
   "license": "Apache-2.0",
