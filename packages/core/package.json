@@ -22,7 +22,6 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "development": "./src/index.ts",
       "require": "./dist/index.cjs",
       "import": "./dist/index.js"
     }
