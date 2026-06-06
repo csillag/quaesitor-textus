@@ -49,51 +49,54 @@ const BookList = ({ mode }: { mode: 'AND' | 'OR' }) => {
   )
 }
 
+const SEARCHES = [
+  { name: 'author', field: 'author' },
+  { name: 'title', field: 'title' },
+]
+
 const BookSearchWrapper = () => {
   const [mode, setMode] = useState<'AND' | 'OR'>('AND')
 
   return (
-    <WithSearch name="author" field="author">
-      <WithSearch name="title" field="title">
-        <div style={{ fontFamily: 'sans-serif', padding: 16, maxWidth: 640 }}>
-          <h2 style={{ marginTop: 0 }}>Classical Book Search</h2>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center' }}>
-            <SearchInput
-              name="author"
-              placeholder="Search for author"
-              style={{ flex: 1, padding: '6px 10px', fontSize: 14, boxSizing: 'border-box' }}
-            />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2, fontSize: 13 }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <input
-                  type="radio"
-                  name="mode"
-                  value="AND"
-                  checked={mode === 'AND'}
-                  onChange={() => setMode('AND')}
-                />
-                AND
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <input
-                  type="radio"
-                  name="mode"
-                  value="OR"
-                  checked={mode === 'OR'}
-                  onChange={() => setMode('OR')}
-                />
-                OR
-              </label>
-            </div>
-            <SearchInput
-              name="title"
-              placeholder="Search for title"
-              style={{ flex: 1, padding: '6px 10px', fontSize: 14, boxSizing: 'border-box' }}
-            />
+    <WithSearch searches={SEARCHES}>
+      <div style={{ fontFamily: 'sans-serif', padding: 16, maxWidth: 640 }}>
+        <h2 style={{ marginTop: 0 }}>Classical Book Search</h2>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center' }}>
+          <SearchInput
+            name="author"
+            placeholder="Search for author"
+            style={{ flex: 1, padding: '6px 10px', fontSize: 14, boxSizing: 'border-box' }}
+          />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2, fontSize: 13 }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <input
+                type="radio"
+                name="mode"
+                value="AND"
+                checked={mode === 'AND'}
+                onChange={() => setMode('AND')}
+              />
+              AND
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <input
+                type="radio"
+                name="mode"
+                value="OR"
+                checked={mode === 'OR'}
+                onChange={() => setMode('OR')}
+              />
+              OR
+            </label>
           </div>
-          <BookList mode={mode} />
+          <SearchInput
+            name="title"
+            placeholder="Search for title"
+            style={{ flex: 1, padding: '6px 10px', fontSize: 14, boxSizing: 'border-box' }}
+          />
         </div>
-      </WithSearch>
+        <BookList mode={mode} />
+      </div>
     </WithSearch>
   )
 }
