@@ -22,6 +22,13 @@ export interface CreateLiveSearchOptions {
    * each match is emitted immediately as `{type:'match', item}`.
    */
   coalesceMs?: number
+  /**
+   * Optional Mongo projection applied to both the snapshot query and the
+   * per-match lookup, so excluded fields are never read from the database.
+   * Use it to drop large internal fields (e.g. derived n-gram indexes) at the
+   * source rather than filtering them out downstream.
+   */
+  projection?: Document
   sendEvent: (event: LiveEvent) => void
 }
 
@@ -29,7 +36,8 @@ export interface CreateLiveSearchOptions {
 // matches for each newly-indexed document that matches `filter` (singular
 // `match`, or coalesced `matches` batches when `coalesceMs` is set), then `capped`.
 export function createLiveSearch(opts: CreateLiveSearchOptions): { stop: () => void } {
-  const { sync, collection, config: _config, filter, sort, cap = 500, coalesceMs, sendEvent } = opts
+  const { sync, collection, config: _config, filter, sort, cap = 500, coalesceMs, projection, sendEvent } = opts
+  const findOpts = projection ? { projection } : undefined
   const seen = new Set<string>()
   let count = 0
   let capped = false
@@ -57,7 +65,7 @@ export function createLiveSearch(opts: CreateLiveSearchOptions): { stop: () => v
   const idOf = (doc: Document) => String(doc._id)
 
   // Initial snapshot (sorted for a nicer first paint; client re-sorts anyway).
-  const cursor = collection.find(filter)
+  const cursor = collection.find(filter, findOpts)
   if (sort) cursor.sort({ [sort.field]: sort.dir })
   void cursor.limit(cap).toArray().then((items) => {
     for (const it of items) seen.add(idOf(it))
@@ -68,7 +76,7 @@ export function createLiveSearch(opts: CreateLiveSearchOptions): { stop: () => v
 
   const listener = (e: SearchSyncEvent) => {
     if (e.type !== 'indexed' || capped) return
-    void collection.findOne({ $and: [{ _id: e.id as any }, filter] })
+    void collection.findOne({ $and: [{ _id: e.id as any }, filter] }, findOpts)
       .then((doc) => {
         if (!doc || capped) return
         const id = idOf(doc)

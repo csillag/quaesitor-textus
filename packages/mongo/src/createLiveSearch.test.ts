@@ -34,6 +34,21 @@ describe('createLiveSearch', () => {
     live.stop(); await sync.stop()
   })
 
+  it('omits projected fields (e.g. _qt) from the snapshot at the source', async () => {
+    if (!available) return
+    const col = client.db('qt_live_test').collection('docs')
+    const sync = startSearchSync(col, config)
+    const events: LiveEvent[] = []
+    const live = createLiveSearch({ sync, collection: col, config, filter: buildTextSearchFilter('name', ['zola'], config), projection: { _qt: 0 }, sendEvent: e => events.push(e) })
+    await new Promise(r => setTimeout(r, 300))
+    const snap = events.find(e => e.type === 'snapshot') as any
+    const doc = snap?.items.find((d: any) => d._id === 'a')
+    expect(doc).toBeDefined()
+    expect(doc._qt).toBeUndefined()
+    expect(doc.name).toBe('Émile Zola')
+    live.stop(); await sync.stop()
+  })
+
   it('pushes a match for a newly-inserted matching doc', async () => {
     if (!available) return
     const col = client.db('qt_live_test').collection('docs')
