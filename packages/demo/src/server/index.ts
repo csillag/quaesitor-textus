@@ -4,6 +4,7 @@ import { createSearchIndexes, startSearchSync, formatSse } from '@quaesitor-text
 import { streamLiveSearch } from '@quaesitor-textus/mongo/fastify'
 import { demoConfig } from '../shared/config'
 import { predicateToMongo } from '../shared/predicateToMongo'
+import { predicateToHighlightSpecs } from '../shared/predicateToHighlightSpecs'
 import { hasTextPattern } from '../shared/predicate'
 import type { DemoPredicate } from '../shared/predicate'
 import { generateBooks, TOTAL_BOOKS, TRUCK_SIZE, batchCommonAuthor, batchSentinel } from '../shared/generator'
@@ -85,7 +86,12 @@ async function main() {
     const filter = predicateToMongo(predicate, demoConfig)
     const sortField = ['year', 'author', 'title'].includes(q.sort) ? q.sort : undefined
     const sort = sortField ? { field: sortField, dir: (q.dir === 'desc' ? -1 : 1) as 1 | -1 } : undefined
-    streamLiveSearch(request, reply, { sync, collection: col, config: demoConfig, filter, sort, cap: 500 })
+    streamLiveSearch(request, reply, {
+      sync, collection: col, config: demoConfig, filter, sort, cap: 500,
+      highlightSpecs: predicateToHighlightSpecs(predicate),
+      // keep the folded verify fields; drop only the bulky ngram arrays
+      projection: { '_qt.author.ngrams': 0, '_qt.title.ngrams': 0 },
+    })
   })
 
   app.get('/api/next-truck', async () => {
