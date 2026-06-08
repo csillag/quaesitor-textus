@@ -3,7 +3,7 @@ import type { SearchOptions } from '@quaesitor-textus/core'
 import type { Document, Filter } from 'mongodb'
 import type { MongoSearchConfig } from './config'
 import { DEFAULT_NAMESPACE, DEFAULT_NGRAM_SIZES } from './config'
-import { modeKey, escapeRegex } from './modes'
+import { modeKey, escapeRegex, resolveMode } from './modes'
 
 export function buildTextSearchFilter(
   target: string,
@@ -16,7 +16,7 @@ export function buildTextSearchFilter(
   const sizes = config.ngramSizes ?? DEFAULT_NGRAM_SIZES
   const t = config.targets[target]
   if (!t) throw new Error(`Unknown search target: ${target}`)
-  const mode = options ?? t.options ?? {}
+  const mode = resolveMode(config, target, options)
 
   const ngramField = `${ns}.${target}.ngrams`
   const verifyField = `${ns}.${target}.${modeKey(mode)}`

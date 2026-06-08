@@ -1,5 +1,5 @@
 import type { SearchOptions } from '@quaesitor-textus/core'
-import type { MongoSearchTarget } from './config'
+import type { MongoSearchTarget, MongoSearchConfig } from './config'
 
 export function modeKey(o: SearchOptions = {}): string {
   let k = 'norm'
@@ -21,4 +21,15 @@ export function targetModes(t: MongoSearchTarget): SearchOptions[] {
 
 export function escapeRegex(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+// Resolve the fold mode for a target: an explicit per-query options object wins,
+// else the target's configured base options, else fully-folded ({}). Shared by
+// buildTextSearchFilter and computeHighlights so their folding cannot drift.
+export function resolveMode(
+  config: MongoSearchConfig,
+  target: string,
+  options?: SearchOptions,
+): SearchOptions {
+  return options ?? config.targets[target]?.options ?? {}
 }

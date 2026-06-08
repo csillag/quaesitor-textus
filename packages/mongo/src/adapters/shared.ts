@@ -3,6 +3,7 @@ import type { IncomingMessage, ServerResponse } from 'http'
 import type { MongoSearchConfig } from '../config'
 import type { SearchSync } from '../startSearchSync'
 import { createLiveSearch } from '../createLiveSearch'
+import type { HighlightSpec } from '../computeHighlights'
 import { formatSse, sseComment } from '../sse'
 
 export const SSE_HEADERS = {
@@ -18,6 +19,10 @@ export interface StreamLiveSearchOptions {
   filter: Filter<Document>
   sort?: { field: string; dir: 1 | -1 }
   cap?: number
+  /** Forwarded to createLiveSearch: out-of-band highlight specs to annotate records. */
+  highlightSpecs?: HighlightSpec[]
+  /** Forwarded to createLiveSearch: mongo projection for snapshot + match lookups. */
+  projection?: Document
   heartbeatMs?: number
 }
 
@@ -37,6 +42,8 @@ export function runLiveSearch(
     filter: opts.filter,
     sort: opts.sort,
     cap: opts.cap,
+    highlightSpecs: opts.highlightSpecs,
+    projection: opts.projection,
     sendEvent,
   })
   const hb = setInterval(() => write(sseComment()), opts.heartbeatMs ?? 25000)
