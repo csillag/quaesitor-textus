@@ -14,6 +14,7 @@ export type Sort = { field: 'year' | 'author' | 'title'; dir: 'asc' | 'desc' }
 function DemoBody() {
   const { patterns: authorP } = useSearchContext('author')
   const { patterns: titleP } = useSearchContext('title')
+  const { patterns: globalP } = useSearchContext('global')
   const [mode, setMode] = useState<'AND' | 'OR'>('AND')
   const [years, setYears] = useState<[number, number]>([YEAR_MIN, YEAR_MAX])
   const [authorCS, setAuthorCS] = useState(false)
@@ -34,13 +35,17 @@ function DemoBody() {
   }
 
   const predicate: DemoPredicate = useMemo(() => {
-    const nodes: DemoPredicate[] = []
-    if (authorP.length) nodes.push(text('author', authorP, authorCS ? { caseSensitive: true } : undefined))
-    if (titleP.length) nodes.push(text('title', titleP, titleCS ? { caseSensitive: true } : undefined))
+    const fieldNodes: DemoPredicate[] = []
+    if (authorP.length) fieldNodes.push(text('author', authorP, authorCS ? { caseSensitive: true } : undefined))
+    if (titleP.length) fieldNodes.push(text('title', titleP, titleCS ? { caseSensitive: true } : undefined))
     const yp = yearRange(years[0], years[1])
-    if (!nodes.length) return yp
-    return mode === 'AND' ? and(...nodes, yp) : and(or(...nodes), yp)
-  }, [authorP, titleP, mode, years, authorCS, titleCS])
+    // Global broadens (find anywhere); per-field tightens. Combine them with AND.
+    const top: DemoPredicate[] = []
+    if (globalP.length) top.push(text('global', globalP))
+    if (fieldNodes.length) top.push(mode === 'AND' ? and(...fieldNodes) : or(...fieldNodes))
+    top.push(yp)
+    return top.length === 1 ? top[0] : and(...top)
+  }, [authorP, titleP, globalP, mode, years, authorCS, titleCS])
 
   return (
     <div style={{ fontFamily: 'sans-serif', padding: 24, maxWidth: 900, margin: '0 auto' }}>
@@ -50,6 +55,9 @@ function DemoBody() {
         <span style={{ color: '#888' }}>{truckMsg}</span>
       </Space>
       <div style={{ color: '#aaa', fontSize: 12, marginBottom: 12 }}>{hint}</div>
+      <div style={{ marginBottom: 12 }}>
+        <SearchInput name="global" placeholder="Search anywhere (author or title)" style={{ width: 460 }} />
+      </div>
       <Space wrap style={{ marginBottom: 12 }}>
         <Space direction="vertical" size={0}>
           <SearchInput name="author" placeholder="Search author" style={{ width: 220 }} />
@@ -83,12 +91,16 @@ function DemoBody() {
   )
 }
 
+const SEARCHES = [
+  { name: 'author', field: 'author' },
+  { name: 'title', field: 'title' },
+  { name: 'global', fields: ['author', 'title'] },
+]
+
 export function App() {
   return (
-    <WithSearch name="author" field="author">
-      <WithSearch name="title" field="title">
-        <DemoBody />
-      </WithSearch>
+    <WithSearch searches={SEARCHES}>
+      <DemoBody />
     </WithSearch>
   )
 }

@@ -90,7 +90,7 @@ async function main() {
       sync, collection: col, config: demoConfig, filter, sort, cap: 500,
       highlightSpecs: predicateToHighlightSpecs(predicate),
       // keep the folded verify fields; drop only the bulky ngram arrays
-      projection: { '_qt.author.ngrams': 0, '_qt.title.ngrams': 0 },
+      projection: { '_qt.author.ngrams': 0, '_qt.title.ngrams': 0, '_qt.global.ngrams': 0 },
     })
   })
 
