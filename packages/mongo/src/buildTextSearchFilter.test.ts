@@ -27,4 +27,10 @@ describe('buildTextSearchFilter', () => {
   it('throws on unknown target', () => {
     expect(() => buildTextSearchFilter('nope', ['x'], config)).toThrow(/Unknown search target/)
   })
+  it('returns a clean mongo filter with no reserved highlight keys (regression)', () => {
+    // A polluted filter (a stray __qtHighlights key) makes mongo match zero docs.
+    const f = buildTextSearchFilter('author', ['café'], config) as any
+    expect(f.__qtHighlights).toBeUndefined()
+    expect(Object.keys(f)).toEqual(['$and'])
+  })
 })

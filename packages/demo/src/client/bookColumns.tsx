@@ -1,11 +1,26 @@
 import React from 'react'
 import type { TableColumnsType } from 'antd'
-import { HighlightedText } from '@quaesitor-textus/core'
+import { HighlightedCell } from '@quaesitor-textus/core'
 import type { Book } from '../shared/generator'
 
 // Shared antd Table columns for both the query and streaming tabs.
+// Streaming records carry a server `_highlights` sidecar (data-driven highlighting);
+// the paged query records do not, so HighlightedCell falls back to context-driven
+// highlighting there — both are correct.
 export const bookColumns: TableColumnsType<Book> = [
-  { title: 'Author', dataIndex: 'author', render: (a: string) => <HighlightedText text={a} searchNames="author" /> },
-  { title: 'Title', dataIndex: 'title', render: (t: string) => <HighlightedText text={t} searchNames="title" /> },
+  {
+    title: 'Author',
+    dataIndex: 'author',
+    render: (_a: string, record: Book) => (
+      <HighlightedCell record={record} field="author" searchNames={['author', 'global']} />
+    ),
+  },
+  {
+    title: 'Title',
+    dataIndex: 'title',
+    render: (_t: string, record: Book) => (
+      <HighlightedCell record={record} field="title" searchNames={['title', 'global']} />
+    ),
+  },
   { title: 'Year', dataIndex: 'year', width: 90 },
 ]

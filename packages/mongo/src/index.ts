@@ -7,6 +7,8 @@ export { searchIndexSpecs, createSearchIndexes } from './searchIndexes'
 export { buildTextSearchFilter } from './buildTextSearchFilter'
 export { startSearchSync } from './startSearchSync'
 export { createLiveSearch } from './createLiveSearch'
+export { computeHighlights } from './computeHighlights'
+export type { HighlightSpec } from './computeHighlights'
 export type { LiveEvent, CreateLiveSearchOptions } from './createLiveSearch'
 export { formatSse, sseComment } from './sse'
 export type {

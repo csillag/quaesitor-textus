@@ -41,6 +41,7 @@ export function StreamTab({ predicate, sort }: { predicate: DemoPredicate; sort:
       const e = JSON.parse(ev.data)
       if (e.type === 'snapshot') e.items.forEach(add)
       else if (e.type === 'match') add(e.item)
+      else if (e.type === 'matches') e.items.forEach(add)
       else if (e.type === 'capped') setCapped(true)
     }
     return () => es.close()

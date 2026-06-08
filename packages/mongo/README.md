@@ -432,3 +432,50 @@ See [`packages/demo`](../demo) for a full-stack, runnable example: a Fastify + V
 React / antd book-search UI over MongoDB with server-side pagination, a year-range
 predicate composed with text search, and a live watcher showcase (the "truckload"
 button inserts raw documents and you watch them become searchable a moment later).
+
+## Highlighting (server-side annotation)
+
+To keep typing fast on large result tables, highlight info is computed on the server
+and shipped with each record, instead of every cell re-highlighting on each keystroke.
+
+Enable it by passing **out-of-band** highlight specs (works through the SSE adapters too
+— `streamLiveSearch`, `streamToNodeResponse`):
+
+```ts
+createLiveSearch({
+  sync, collection, config,
+  filter: buildTextSearchFilter('title', patterns, config), // a plain mongo filter
+  // same { target, patterns, options } triples passed to buildTextSearchFilter,
+  // collected during your own predicate walk:
+  highlightSpecs: [{ target: 'title', patterns }],
+  // keep the folded verify fields so per-field tests need no re-folding;
+  // dropping the big ngram arrays is fine:
+  projection: { '_qt.title.ngrams': 0 },
+  sendEvent,
+})
+```
+
+Each emitted record gains a `_highlights` sidecar:
+
+```ts
+record._highlights = {
+  title: { tokens: ['war'], fields: ['title'] }, // keyed by target === searchName
+}
+```
+
+`buildTextSearchFilter` returns a **plain mongo filter** — highlight info never rides on
+it, so the same filter is safe to run directly (`find` / `countDocuments`). Highlight
+specs travel separately via `highlightSpecs`.
+
+**Best-performance pattern:**
+- Use **single-field targets** (one target per searchable field). Then the stored
+  folded text `_qt.<target>.<mode>` *is* that field, so per-cell matching is exact and
+  free (a substring on already-fetched data — no re-folding, no extra index).
+- Keep `_qt.<target>.<modeKey>` in the projection (drop only `…​.ngrams`).
+
+**Fallbacks (always correct, slower):**
+- *Multi-field targets:* all the target's fields are marked; the client renders plain
+  text on fields that don't actually contain a token.
+- *Folded text projected out / not yet indexed:* the server refolds the raw fields.
+- *`highlightSpecs` absent:* records carry no sidecar; the client reverts to
+  context-driven highlighting (see `HighlightedCell`).

@@ -1,6 +1,8 @@
 import type { Collection, Document, Filter } from 'mongodb'
 import type { MongoSearchConfig } from './config'
 import type { SearchSync, SearchSyncEvent } from './startSearchSync'
+import { computeHighlights } from './computeHighlights'
+import type { HighlightSpec } from './computeHighlights'
 
 export type LiveEvent =
   | { type: 'snapshot'; items: Document[] }
@@ -29,6 +31,12 @@ export interface CreateLiveSearchOptions {
    * source rather than filtering them out downstream.
    */
   projection?: Document
+  /**
+   * When present and non-empty, each emitted document is annotated with a
+   * `_highlights` sidecar computed from these specs and the stored folded target
+   * text. Specs travel out-of-band (the filter stays a plain mongo filter).
+   */
+  highlightSpecs?: HighlightSpec[]
   sendEvent: (event: LiveEvent) => void
 }
 
@@ -36,7 +44,12 @@ export interface CreateLiveSearchOptions {
 // matches for each newly-indexed document that matches `filter` (singular
 // `match`, or coalesced `matches` batches when `coalesceMs` is set), then `capped`.
 export function createLiveSearch(opts: CreateLiveSearchOptions): { stop: () => void } {
-  const { sync, collection, config: _config, filter, sort, cap = 500, coalesceMs, projection, sendEvent } = opts
+  const { sync, collection, config, filter, sort, cap = 500, coalesceMs, projection, sendEvent, highlightSpecs } = opts
+
+  const annotate = (doc: Document): Document =>
+    highlightSpecs && highlightSpecs.length > 0
+      ? { ...doc, _highlights: computeHighlights(highlightSpecs, doc, config) }
+      : doc
   const findOpts = projection ? { projection } : undefined
   const seen = new Set<string>()
   let count = 0
@@ -68,9 +81,10 @@ export function createLiveSearch(opts: CreateLiveSearchOptions): { stop: () => v
   const cursor = collection.find(filter, findOpts)
   if (sort) cursor.sort({ [sort.field]: sort.dir })
   void cursor.limit(cap).toArray().then((items) => {
+    const annotated = items.map(annotate)
     for (const it of items) seen.add(idOf(it))
     count = items.length
-    sendEvent({ type: 'snapshot', items })
+    sendEvent({ type: 'snapshot', items: annotated })
     if (count >= cap) { capped = true; sendEvent({ type: 'capped' }) }
   }).catch(() => sendEvent({ type: 'snapshot', items: [] }))
 
@@ -83,7 +97,7 @@ export function createLiveSearch(opts: CreateLiveSearchOptions): { stop: () => v
         if (seen.has(id)) return
         seen.add(id)
         count += 1
-        emitMatch(doc)
+        emitMatch(annotate(doc))
         if (count >= cap) { capped = true; flush(); sendEvent({ type: 'capped' }) }
       })
       .catch(() => { /* skip a failed match-test; keep the stream alive */ })
