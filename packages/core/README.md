@@ -193,17 +193,26 @@ Same props as `HighlightedText` plus `fragmentLength?: number` (default `80`). T
 Wrapping every table cell in `HighlightedText` wired to the live search tokens makes
 each keystroke re-highlight every cell — a CPU spike on large tables. `HighlightedCell`
 makes highlighting **data-driven**: when a record carries a server `_highlights`
-sidecar (see `@quaesitor-textus/mongo`'s `highlight` option), only the flagged cells
+sidecar (see `@quaesitor-textus/mongo`'s `highlightSpecs` option), only the flagged cells
 highlight, using the tokens carried in the data — so typing does no per-cell work.
 
 ```tsx
-<HighlightedCell record={row} field="title" searchName="title" />
+// a single search:
+<HighlightedCell record={row} field="title" searchNames="title" />
+
+// per-field + global search on the same cell (tokens unioned):
+<HighlightedCell record={row} field="title" searchNames={['title', 'global']} />
+
+// every active search:
+<HighlightedCell record={row} field="title" all />
 ```
 
-- If `row._highlights` is present, the cell highlights only when its `field` is flagged
-  for `searchName`, using `row._highlights[searchName].tokens`.
+- `searchNames` (`string | string[]`) / `all` mirror `HighlightedText`. If `row._highlights`
+  is present, the cell is highlighted with the **union** of tokens from every named search
+  (or all of them) whose matched `fields` include this `field` — so a column's own search
+  and a global search apply together.
 - If `row._highlights` is absent, it falls back to the original context-driven
-  highlighting (`HighlightedText` wired to the named search), so consumers that haven't
+  highlighting (`HighlightedText` wired to `searchNames`/`all`), so consumers that haven't
   adopted server annotation still get correct (if slower) highlights.
 
 The sidecar shape is exported as `RecordHighlights` / `FieldHighlight`.

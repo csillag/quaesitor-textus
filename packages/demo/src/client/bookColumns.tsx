@@ -12,14 +12,14 @@ export const bookColumns: TableColumnsType<Book> = [
     title: 'Author',
     dataIndex: 'author',
     render: (_a: string, record: Book) => (
-      <HighlightedCell record={record} field="author" searchName="author" />
+      <HighlightedCell record={record} field="author" searchNames="author" />
     ),
   },
   {
     title: 'Title',
     dataIndex: 'title',
     render: (_t: string, record: Book) => (
-      <HighlightedCell record={record} field="title" searchName="title" />
+      <HighlightedCell record={record} field="title" searchNames="title" />
     ),
   },
   { title: 'Year', dataIndex: 'year', width: 90 },
