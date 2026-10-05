@@ -65,8 +65,8 @@
     "@quaesitor-textus/core": "workspace:*"
   },
   "peerDependencies": {
-    "mongodb": ">=5",
-    "fastify": "^4 || ^5"
+    "fastify": "^4 || ^5",
+    "mongodb": ">=5"
   },
   "peerDependenciesMeta": {
     "fastify": {
@@ -74,6 +74,7 @@
     }
   },
   "devDependencies": {
+    "@types/node": "^24.19.1",
     "fastify": "^4.0.0",
     "mongodb": "^6.0.0",
     "tsup": "^8.0.0",
