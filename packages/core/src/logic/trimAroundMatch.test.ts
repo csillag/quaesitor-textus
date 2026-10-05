@@ -43,6 +43,27 @@ describe('trimAroundMatch', () => {
     expect(result).toBe('x'.repeat(80) + '…')
   })
 
+  it('shows the first match when the matches lie further apart than the fragment', () => {
+    // matches at 0–4 and 34–38, fragmentLength=10: centring on both would show only dots
+    const text = 'sark' + '.'.repeat(30) + 'sark'
+    expect(trimAroundMatch(text, ['sark'], { fragmentLength: 10 })).toBe('sark' + '.'.repeat(6) + '…')
+  })
+
+  it('centres on the most matches that fit in one fragment', () => {
+    // 'ab' at 0, 22 and 25; fragmentLength=9 fits the last two (22–27): window 20–29
+    const text = 'ab' + '.'.repeat(20) + 'ab.ab' + '.'.repeat(20)
+    expect(trimAroundMatch(text, ['ab'], { fragmentLength: 9 })).toBe('…..ab.ab..…')
+  })
+
+  it('starts at a match that is longer than the fragment', () => {
+    expect(trimAroundMatch('....abcdefgh....', ['abcdefgh'], { fragmentLength: 5 })).toBe('…abcde…')
+  })
+
+  it('keeps an accent-insensitive match in view when another one is far away', () => {
+    const text = 'A sárkány, ' + 'x'.repeat(200) + ' sárkány'
+    expect(trimAroundMatch(text, ['sark'], { fragmentLength: 40 }).startsWith('A sárkány')).toBe(true)
+  })
+
   it('is case-insensitive by default when locating the trim window', () => {
     // 'hello world' (11), pattern 'HELLO', fragmentLength=8
     // same window as lowercase: 'hello wo…'

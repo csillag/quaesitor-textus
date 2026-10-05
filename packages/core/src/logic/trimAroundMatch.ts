@@ -25,9 +25,8 @@ export function trimAroundMatch(
     return text.substring(0, fragmentLength) + '…'
   }
 
-  const minStart = Math.min(...spans.map(s => s.start))
-  const maxEnd = Math.max(...spans.map(s => s.end))
-  const buffer = fragmentLength - (maxEnd - minStart)
+  const [minStart, maxEnd] = focus(spans, fragmentLength)
+  const buffer = Math.max(0, fragmentLength - (maxEnd - minStart))
 
   const idealStart = minStart - Math.floor(buffer / 2)
   const startPos = Math.max(0, Math.min(idealStart, text.length - fragmentLength))
@@ -37,4 +36,21 @@ export function trimAroundMatch(
   const suffix = endPos < text.length ? '…' : ''
 
   return prefix + text.substring(startPos, endPos) + suffix
+}
+
+/**
+ * The stretch of text to centre the fragment on: all the matches if they fit
+ * in one fragment, else the most matches that do (the earliest such group).
+ * Centring on matches that do not fit would show the text between them, and
+ * none of the matches.
+ */
+function focus(spans: { start: number; end: number }[], fragmentLength: number): [number, number] {
+  // getHighlightPositions returns the spans sorted and without overlaps.
+  let best = { first: 0, last: 0 }
+  for (let first = 0, last = 0; first < spans.length; first++) {
+    last = Math.max(last, first)
+    while (last + 1 < spans.length && spans[last + 1].end - spans[first].start <= fragmentLength) last++
+    if (last - first > best.last - best.first) best = { first, last }
+  }
+  return [spans[best.first].start, spans[best.last].end]
 }
