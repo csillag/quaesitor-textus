@@ -1,5 +1,11 @@
+import { join } from 'node:path'
 import { describe, it, expect } from 'vitest'
 import { trimAroundMatch } from './trimAroundMatch'
+import { runBounded } from '../test-utils/runBounded'
+
+// In a worker with a time and heap limit: a pattern that loops forever fails the test.
+const boundedTrim = (...args: Parameters<typeof trimAroundMatch>) =>
+  runBounded<string>(join(import.meta.dirname, 'trimAroundMatch.ts'), 'trimAroundMatch', args)
 
 describe('trimAroundMatch', () => {
   it('returns text unchanged when shorter than fragmentLength', () => {
@@ -68,5 +74,20 @@ describe('trimAroundMatch', () => {
     // 'hello world' (11), pattern 'HELLO', fragmentLength=8
     // same window as lowercase: 'hello wo…'
     expect(trimAroundMatch('hello world', ['HELLO'], { fragmentLength: 8 })).toBe('hello wo…')
+  })
+
+  describe('a pattern that normalises to the empty string', () => {
+    it('trims from the start, as without a match, when the pattern is empty', async () => {
+      expect(await boundedTrim('abcdefghijklmno', [''], { fragmentLength: 5 })).toBe('abcde…')
+    })
+
+    it('trims from the start, as without a match, when the pattern is combining marks alone', async () => {
+      expect(await boundedTrim('abcdefghijklmno', ['\u0301\u0301\u0301'], { fragmentLength: 5 })).toBe('abcde…')
+    })
+
+    it('still centres on the other patterns of the call', async () => {
+      // same window as the 'bcd' case above
+      expect(await boundedTrim('aaaaabcdeaaaaa', ['\u0301', 'bcd', ''], { fragmentLength: 5 })).toBe('…abcde…')
+    })
   })
 })

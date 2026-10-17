@@ -2,6 +2,12 @@ import type { SearchOptions, HighlightSpan } from './types'
 import { normalizeText } from './normalizeText'
 import { normalizeWithMap } from './normalizeWithMap'
 
+/**
+ * The spans of `text` to mark for `patterns`, sorted and without overlaps.
+ *
+ * A pattern that normalises to the empty string ('', or combining marks alone
+ * when diacritic-insensitive) marks nothing; the other patterns are marked as usual.
+ */
 export function getHighlightPositions(
   text: string,
   patterns: string[],
@@ -14,6 +20,8 @@ export function getHighlightPositions(
 
   for (const pattern of patterns) {
     const normalizedPattern = normalizeText(pattern, options)
+    // Nothing left to find: indexOf('') never returns -1, so the loop would not end.
+    if (normalizedPattern === '') continue
     let searchFrom = 0
     while (true) {
       const normStart = normalizedText.indexOf(normalizedPattern, searchFrom)

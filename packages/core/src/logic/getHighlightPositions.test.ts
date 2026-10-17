@@ -1,5 +1,12 @@
+import { join } from 'node:path'
 import { describe, it, expect } from 'vitest'
 import { getHighlightPositions } from './getHighlightPositions'
+import type { HighlightSpan } from './types'
+import { runBounded } from '../test-utils/runBounded'
+
+// In a worker with a time and heap limit: a pattern that loops forever fails the test.
+const boundedHighlight = (...args: Parameters<typeof getHighlightPositions>) =>
+  runBounded<HighlightSpan[]>(join(import.meta.dirname, 'getHighlightPositions.ts'), 'getHighlightPositions', args)
 
 describe('getHighlightPositions', () => {
   it('returns empty array for empty patterns', () => {
@@ -85,5 +92,28 @@ describe('getHighlightPositions', () => {
       { start: 0, end: 3 },
       { start: 12, end: 15 },
     ])
+  })
+
+  describe('a pattern that normalises to the empty string', () => {
+    it('marks nothing when the pattern is empty', async () => {
+      expect(await boundedHighlight('abc', [''])).toEqual([])
+    })
+
+    it('marks nothing when the pattern is combining marks alone', async () => {
+      // Diacritic-insensitive by default: the marks fold away and nothing is left.
+      expect(await boundedHighlight('abc', ['\u0301\u0301\u0301'])).toEqual([])
+    })
+
+    it('still marks the other patterns of the call', async () => {
+      expect(await boundedHighlight('hello world', ['\u0301', 'world', ''])).toEqual([
+        { start: 6, end: 11 },
+      ])
+    })
+
+    it('is empty only after folding: diacritic-sensitive, a combining mark is a pattern', () => {
+      expect(getHighlightPositions('e\u0301', ['\u0301'], { diacriticSensitive: true })).toEqual([
+        { start: 1, end: 2 },
+      ])
+    })
   })
 })

@@ -10,6 +10,11 @@ export interface TrimOptions extends SearchOptions {
   fragmentLength?: number
 }
 
+/**
+ * A fragment of `text` around the matches of `patterns`, from its start when
+ * nothing matches. Matches as {@link getHighlightPositions} marks: a pattern that
+ * normalises to the empty string is ignored.
+ */
 export function trimAroundMatch(
   text: string,
   patterns: string[],

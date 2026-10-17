@@ -46,4 +46,26 @@ describe('matchItem', () => {
     expect(matchItem('héllo', ['hello'], { diacriticSensitive: true })).toBe(false)
     expect(matchItem('héllo', ['héllo'], { diacriticSensitive: true })).toBe(true)
   })
+
+  describe('a pattern that normalises to the empty string constrains nothing', () => {
+    it('matches every text when it is the only pattern, like an empty patterns array', () => {
+      expect(matchItem('hello world', [''])).toBe(true)
+      expect(matchItem('', [''])).toBe(true)
+    })
+
+    it('matches every text when combining marks alone are the only pattern', () => {
+      // Diacritic-insensitive by default: the marks fold away and nothing is left.
+      expect(matchItem('hello world', ['\u0301\u0301\u0301'])).toBe(true)
+    })
+
+    it('leaves the decision to the other patterns of the call', () => {
+      expect(matchItem('hello world', ['\u0301', 'world', ''])).toBe(true)
+      expect(matchItem('hello world', ['\u0301', 'xyz', ''])).toBe(false)
+    })
+
+    it('is empty only after folding: diacritic-sensitive, a combining mark is a pattern', () => {
+      expect(matchItem('hello', ['\u0301'], { diacriticSensitive: true })).toBe(false)
+      expect(matchItem('he\u0301llo', ['\u0301'], { diacriticSensitive: true })).toBe(true)
+    })
+  })
 })
