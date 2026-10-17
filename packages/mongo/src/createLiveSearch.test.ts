@@ -8,22 +8,26 @@ import type { SearchSync, SearchSyncEvent, SearchSyncListener } from './startSea
 const URL = process.env.MONGO_URL ?? 'mongodb://localhost:27018/?directConnection=true'
 const config: MongoSearchConfig = { targets: { name: { fields: ['name'] } } }
 let client: MongoClient
+// Without a reachable server the server tests skip; a setup error after connecting fails the run.
 let available = true
 
 beforeAll(async () => {
   try {
     client = await MongoClient.connect(URL, { serverSelectionTimeoutMS: 1500 })
-    const col = client.db('qt_live_test').collection('docs')
-    await col.deleteMany({})
-    await col.insertMany([{ _id: 'a', name: 'Émile Zola', ...computeSearchFields({ name: 'Émile Zola' }, config) }] as never[])
-    await createSearchIndexes(col, config)
-  } catch { available = false }
+  } catch {
+    available = false
+    return
+  }
+  const col = client.db('qt_live_test').collection('docs')
+  await col.deleteMany({})
+  await col.insertMany([{ _id: 'a', name: 'Émile Zola', ...computeSearchFields({ name: 'Émile Zola' }, config) }] as never[])
+  await createSearchIndexes(col, config)
 })
 afterAll(async () => { await client?.close() })
 
 describe('createLiveSearch', () => {
-  it('emits a snapshot of current matches', async () => {
-    if (!available) return
+  it('emits a snapshot of current matches', async (ctx) => {
+    if (!available) return ctx.skip()
     const col = client.db('qt_live_test').collection('docs')
     const sync = startSearchSync(col, config)
     const events: LiveEvent[] = []
@@ -34,8 +38,8 @@ describe('createLiveSearch', () => {
     live.stop(); await sync.stop()
   })
 
-  it('omits projected fields (e.g. _qt) from the snapshot at the source', async () => {
-    if (!available) return
+  it('omits projected fields (e.g. _qt) from the snapshot at the source', async (ctx) => {
+    if (!available) return ctx.skip()
     const col = client.db('qt_live_test').collection('docs')
     const sync = startSearchSync(col, config)
     const events: LiveEvent[] = []
@@ -49,8 +53,8 @@ describe('createLiveSearch', () => {
     live.stop(); await sync.stop()
   })
 
-  it('pushes a match for a newly-inserted matching doc', async () => {
-    if (!available) return
+  it('pushes a match for a newly-inserted matching doc', async (ctx) => {
+    if (!available) return ctx.skip()
     const col = client.db('qt_live_test').collection('docs')
     const sync = startSearchSync(col, config)
     const events: LiveEvent[] = []

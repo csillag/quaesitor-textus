@@ -7,6 +7,7 @@ import { searchFieldsVersion } from './version'
 const URL = process.env.MONGO_URL ?? 'mongodb://localhost:27018/?directConnection=true'
 const config: MongoSearchConfig = { targets: { name: { fields: ['name'] } } }
 let client: MongoClient
+// Without a reachable server the tests skip; any error after connecting fails the test.
 let available = true
 
 beforeAll(async () => {
@@ -16,8 +17,8 @@ beforeAll(async () => {
 afterAll(async () => { await client?.close() })
 
 describe('startSearchSync backfill', () => {
-  it('derives a pre-existing doc written before the watcher starts', async () => {
-    if (!available) return
+  it('derives a pre-existing doc written before the watcher starts', async (ctx) => {
+    if (!available) return ctx.skip()
     const col = client.db('qt_backfill_test').collection('docs')
     await col.deleteMany({})
     await col.insertOne({ _id: 'pre', name: 'Émile Zola' } as never) // raw, before watcher
@@ -28,8 +29,8 @@ describe('startSearchSync backfill', () => {
     await sync.stop()
   })
 
-  it('re-derives a doc whose stored version is stale', async () => {
-    if (!available) return
+  it('re-derives a doc whose stored version is stale', async (ctx) => {
+    if (!available) return ctx.skip()
     const col = client.db('qt_backfill_test').collection('docs')
     await col.deleteMany({})
     // Doc that already has derived fields but stamped with an obsolete version.
@@ -48,8 +49,8 @@ describe('startSearchSync config provider', () => {
     targets: { title: { fields: ['title'] }, body: { fields: ['body'] } },
   }
 
-  it('resolves a provider at start and backfills with it', async () => {
-    if (!available) return
+  it('resolves a provider at start and backfills with it', async (ctx) => {
+    if (!available) return ctx.skip()
     const col = client.db('qt_provider_test').collection('start')
     await col.deleteMany({})
     await col.insertOne({ _id: 'a', title: 'Hello', body: 'World' } as never)
@@ -61,8 +62,8 @@ describe('startSearchSync config provider', () => {
     await sync.stop()
   })
 
-  it('re-derives existing docs when the provider returns a grown config', async () => {
-    if (!available) return
+  it('re-derives existing docs when the provider returns a grown config', async (ctx) => {
+    if (!available) return ctx.skip()
     const col = client.db('qt_provider_test').collection('grow')
     await col.deleteMany({})
     await col.insertOne({ _id: 'a', title: 'Hello', body: 'World' } as never)
@@ -80,8 +81,8 @@ describe('startSearchSync config provider', () => {
     await sync.stop()
   })
 
-  it('does not re-backfill when the provider returns an unchanged version', async () => {
-    if (!available) return
+  it('does not re-backfill when the provider returns an unchanged version', async (ctx) => {
+    if (!available) return ctx.skip()
     const col = client.db('qt_provider_test').collection('stable')
     await col.deleteMany({})
     await col.insertOne({ _id: 'a', title: 'Hello' } as never)
@@ -95,8 +96,8 @@ describe('startSearchSync config provider', () => {
     await sync.stop()
   })
 
-  it('static config is unchanged and the library does not create indexes', async () => {
-    if (!available) return
+  it('static config is unchanged and the library does not create indexes', async (ctx) => {
+    if (!available) return ctx.skip()
     const col = client.db('qt_provider_test').collection('static')
     await col.deleteMany({})
     await col.insertOne({ _id: 'a', title: 'Hello' } as never)
@@ -109,8 +110,8 @@ describe('startSearchSync config provider', () => {
     await sync.stop()
   })
 
-  it('creates indexes for newly added targets on reconfigure', async () => {
-    if (!available) return
+  it('creates indexes for newly added targets on reconfigure', async (ctx) => {
+    if (!available) return ctx.skip()
     const col = client.db('qt_provider_test').collection('reidx')
     await col.deleteMany({})
     await col.insertOne({ _id: 'a', title: 'Hello', body: 'World' } as never)
@@ -125,8 +126,8 @@ describe('startSearchSync config provider', () => {
     await sync.stop()
   })
 
-  it('keeps a consistent final state under rapid config changes', async () => {
-    if (!available) return
+  it('keeps a consistent final state under rapid config changes', async (ctx) => {
+    if (!available) return ctx.skip()
     const col = client.db('qt_provider_test').collection('rapid')
     await col.deleteMany({})
     await col.insertOne({ _id: 'a', title: 'Hello', body: 'World' } as never)

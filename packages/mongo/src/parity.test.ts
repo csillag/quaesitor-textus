@@ -25,19 +25,21 @@ const DOCS = [
 ]
 
 let client: MongoClient
+// Without a reachable server the tests skip; a setup error after connecting fails the run.
 let available = true
 
 beforeAll(async () => {
   try {
     client = await MongoClient.connect(URL, { serverSelectionTimeoutMS: 1500 })
-    for (const [key, cfg] of Object.entries(configs) as Array<[ConfigKey, MongoSearchConfig]>) {
-      const col = client.db('qt_parity_test').collection(collectionName(key))
-      await col.deleteMany({})
-      await col.insertMany(DOCS.map(d => ({ ...d, ...computeSearchFields(d, cfg) })))
-      await createSearchIndexes(col, cfg)
-    }
   } catch {
     available = false
+    return
+  }
+  for (const [key, cfg] of Object.entries(configs) as Array<[ConfigKey, MongoSearchConfig]>) {
+    const col = client.db('qt_parity_test').collection(collectionName(key))
+    await col.deleteMany({})
+    await col.insertMany(DOCS.map(d => ({ ...d, ...computeSearchFields(d, cfg) })))
+    await createSearchIndexes(col, cfg)
   }
 })
 afterAll(async () => { await client?.close() })
@@ -73,8 +75,8 @@ describe('client↔server parity', () => {
     { patterns: ['\u0301'], options: { diacriticSensitive: true } },  // fully folded, empty
   ]
   for (const c of cases) {
-    it(`parity: ${JSON.stringify(c)}`, async () => {
-      if (!available) return
+    it(`parity: ${JSON.stringify(c)}`, async (ctx) => {
+      if (!available) return ctx.skip()
       expect(await serverMatches(c.patterns, c.options, c.config)).toEqual(clientMatches(c.patterns, c.options))
     })
   }
