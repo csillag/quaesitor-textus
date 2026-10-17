@@ -13,8 +13,16 @@ import { normalizeText } from './normalizeText'
  *   normalising, the result is `[]` and the search is inactive. Otherwise every
  *   remaining word is returned, shorter ones included.
  *
- * Lengths count UTF-16 code units of the normalised word, so 'ß' (searched as
- * 'ss') counts 2 and a decomposed 'é' (searched as 'e') counts 1.
+ * Lengths count UTF-16 code units of the normalised word. Diacritic-insensitive,
+ * a character that folds to two or more units therefore reaches the default
+ * `minLength` of 2 on its own: 'ß', 'æ', 'œ' and 'þ' (searched as 'ss', 'ae',
+ * 'oe', 'th'), Hangul syllables (decomposed into jamo), kana with a dakuten or
+ * handakuten, Arabic letters with hamza or madda, and precomposed Indic letters
+ * with a nukta. Their marks lie outside the stripped combining-diacritics block,
+ * so they stay. A decomposed 'é' (searched as 'e') counts 1. Typed Hungarian and
+ * English count as typed: each precomposed accented letter folds to one letter.
+ * Diacritic-sensitive, only lowercasing can change a length ('İ' becomes 'i̇',
+ * 2 units).
  */
 export function parseInput(text: string, options: SearchOptions = {}): string[] {
   const { minLength = 2 } = options

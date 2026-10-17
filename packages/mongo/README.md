@@ -127,7 +127,10 @@ With a `minLength` below the smallest n-gram size (e.g. `minLength: 1`, or
 (where `parseInput` counts a decomposed `é` as two characters but the n-grams see
 one `e`), some queries yield no n-gram. `buildTextSearchFilter` then leaves out the
 `$all` pre-filter and checks the patterns with `$regex` alone. The results still
-equal the client's, but Mongo scans the whole collection for that query.
+equal the client's, but Mongo scans the whole collection for that query, and the
+query can return most of it (e.g. `['e']` with `minLength: 1`). Cap or page the
+results (e.g. `find(filter).limit(n)`); `createLiveSearch` already caps at `500` by
+default.
 
 ### 2. Keep derived fields in sync
 
@@ -240,7 +243,9 @@ const rows = await collection.find(filter).toArray()
 - otherwise `{ $and: [ { ngramField: { $all: <folded ngrams> } }, ...perPatternVerifyRegex ] }`;
 - when no pattern is long enough to yield an n-gram, the `$all` is left out:
   `{ $and: [ ...perPatternVerifyRegex ] }`. The result is the same, but the query
-  does not use the index (see
+  does not use the index and can return most of the collection (e.g. `['e']` with
+  `minLength: 1`), so cap or page the results; `createLiveSearch` caps at `500`
+  by default (see
   [Pair `minLength` with the n-gram sizes](#pair-minlength-with-the-n-gram-sizes)).
 
 Each pattern must be a substring of the mode-folded verify string (patterns are
