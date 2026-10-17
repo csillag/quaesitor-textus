@@ -90,6 +90,15 @@ describe('useFilterFunction', () => {
     expect(result.current(books[1])).toBe(false)
   })
 
+  it('OR mode: a query that folds away entirely is neutral, not a match for every item', () => {
+    // Combining marks alone fold to '' (diacritic-insensitive by default).
+    const { result } = renderHook(() => useFilterFunction('OR'), {
+      wrapper: makeWrapper('austen', '\u0301\u0301\u0301'),
+    })
+    expect(result.current(books[0])).toBe(true)
+    expect(result.current(books[1])).toBe(false)
+  })
+
   it('uses fields from the context entry', () => {
     const { result } = renderHook(() => useFilterFunction('AND'), {
       wrapper: makeWrapper('', 'pride'),

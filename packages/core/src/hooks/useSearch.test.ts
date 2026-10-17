@@ -63,6 +63,12 @@ describe('useSearch', () => {
     expect(result.current.hasPatterns).toBe(false)
   })
 
+  it('hasPatterns is false when the query folds away entirely', () => {
+    const { result } = renderHook(() => useSearch(items, getCorpus))
+    act(() => result.current.setQuery('\u0301\u0301\u0301'))
+    expect(result.current.hasPatterns).toBe(false)
+  })
+
   it('hasPatterns is true when query has valid patterns', () => {
     const { result } = renderHook(() => useSearch(items, getCorpus))
     act(() => result.current.setQuery('ap'))

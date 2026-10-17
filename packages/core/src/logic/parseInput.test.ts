@@ -58,4 +58,44 @@ describe('parseInput', () => {
     expect(parseInput('foo foo')).toEqual(['foo'])
     expect(parseInput('foo bar foo')).toEqual(['foo', 'bar'])
   })
+
+  describe('a word that normalises to the empty string is dropped', () => {
+    it('drops combining marks alone, which fold away when diacritic-insensitive', () => {
+      expect(parseInput('\u0301\u0301\u0301')).toEqual([])
+    })
+
+    it('keeps the other words of the query', () => {
+      expect(parseInput('foo \u0301\u0301\u0301 bar')).toEqual(['foo', 'bar'])
+    })
+
+    it('cannot lift the short words of the query over minLength', () => {
+      expect(parseInput('a \u0301\u0301\u0301')).toEqual([])
+    })
+
+    it('is empty only after folding: diacritic-sensitive, combining marks are a word', () => {
+      expect(parseInput('\u0301\u0301\u0301', { diacriticSensitive: true })).toEqual([
+        '\u0301\u0301\u0301',
+      ])
+    })
+  })
+
+  describe('minLength counts the normalised word, as matchItem compares it', () => {
+    it('a decomposed letter that folds to one character is below the default minLength', () => {
+      // 'e' + combining acute: two code units typed, 'e' searched.
+      expect(parseInput('e\u0301')).toEqual([])
+    })
+
+    it('a letter that folds to two characters reaches the default minLength', () => {
+      // 'ß' is searched as 'ss'.
+      expect(parseInput('ß')).toEqual(['ß'])
+    })
+
+    it('diacritic-sensitive, the combining mark stays and counts', () => {
+      expect(parseInput('e\u0301', { diacriticSensitive: true })).toEqual(['e\u0301'])
+    })
+
+    it('returns the words as typed, not normalised', () => {
+      expect(parseInput('Straße É')).toEqual(['Straße', 'É'])
+    })
+  })
 })
