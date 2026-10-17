@@ -16,7 +16,12 @@ into MongoDB while keeping two hard constraints:
 
 - **Index-backed.** Queries use a multikey index over stored n-grams as a coarse
   superset pre-filter, so Mongo never has to scan the whole collection for a
-  substring.
+  substring. This holds when at least one pattern, fully folded, is as long as the
+  smallest n-gram size. Patterns from core's `parseInput` always qualify when its
+  `minLength` is at least the smallest n-gram size (the defaults, `2` and `[2, 3]`,
+  do) and the query mode is diacritic-insensitive. A query whose patterns are all
+  shorter still returns the right documents, but without the index; see
+  [Pair `minLength` with the n-gram sizes](#pair-minlength-with-the-n-gram-sizes).
 - **No server-side JavaScript.** MongoDB's query engine (and its `$where` / server
   JS) does **not** implement `String.prototype.normalize`, so it cannot fold
   Unicode the way the client does. Instead, **all normalization happens in Node at
@@ -49,7 +54,8 @@ For namespace `ns` (default `_qt`) and a configured target `t`, each document ga
 
 A query for a given mode `$all`s the fully-folded n-grams of its patterns against
 `ngrams`, then `$regex`es each pattern (folded with that same mode) against the
-mode's verify string.
+mode's verify string. When the patterns are too short to yield any n-gram, the
+`$all` is left out and the `$regex` checks alone decide.
 
 ## Mongo setup
 
@@ -106,6 +112,22 @@ const config: MongoSearchConfig = {
   folded).
 - `queryModes` — additional runtime-selectable modes. The set of verify strings a
   target stores is `[options ?? {}, ...queryModes]` deduped by `modeKey`.
+
+#### Pair `minLength` with the n-gram sizes
+
+The n-gram pre-filter needs a pattern that, fully folded, is at least as long as
+the smallest of `ngramSizes` (default `2`). Keep the client's `minLength` (the
+`SearchOptions` field read by `parseInput`, `WithSearch` and `useSearch`; default
+`2`) at least that large, and raise the two together: with `ngramSizes: [3]`, use
+`minLength: 3`. Then, in a diacritic-insensitive mode, every query the client
+sends is index-backed.
+
+With a `minLength` below the smallest n-gram size (e.g. `minLength: 1`, or
+`ngramSizes: [3]` with the default `minLength`), or in a diacritic-sensitive mode
+(where `parseInput` counts a decomposed `é` as two characters but the n-grams see
+one `e`), some queries yield no n-gram. `buildTextSearchFilter` then leaves out the
+`$all` pre-filter and checks the patterns with `$regex` alone. The results still
+equal the client's, but Mongo scans the whole collection for that query.
 
 ### 2. Keep derived fields in sync
 
@@ -212,7 +234,14 @@ const rows = await collection.find(filter).toArray()
 `Filter<Document>`:
 
 - empty `patterns` → `{}` (match everything);
-- otherwise `{ $and: [ { ngramField: { $all: <folded ngrams> } }, ...perPatternVerifyRegex ] }`.
+- a pattern that folds to the empty string (e.g. combining marks alone, in a
+  diacritic-insensitive mode) constrains nothing and is dropped, as in core's
+  `matchItem`; if no pattern is left → `{}` (match everything);
+- otherwise `{ $and: [ { ngramField: { $all: <folded ngrams> } }, ...perPatternVerifyRegex ] }`;
+- when no pattern is long enough to yield an n-gram, the `$all` is left out:
+  `{ $and: [ ...perPatternVerifyRegex ] }`. The result is the same, but the query
+  does not use the index (see
+  [Pair `minLength` with the n-gram sizes](#pair-minlength-with-the-n-gram-sizes)).
 
 Each pattern must be a substring of the mode-folded verify string (patterns are
 AND-ed). Pass `options` to pick a non-default mode (e.g.
